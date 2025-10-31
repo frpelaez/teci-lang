@@ -6,3 +6,8 @@
 + "multi
  line
  string" // ha
+/* comment
+block coment 
+over a couple
+of lines */
+(let fun)

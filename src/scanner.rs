@@ -100,6 +100,9 @@ impl Scanner {
                             break;
                         }
                     }
+                } else if self.next_is_and_advance('*') {
+                    // Block comment starts
+                    self.read_comment()?;
                 } else {
                     self.add_token(TokenType::Slash);
                 }
@@ -176,6 +179,38 @@ impl Scanner {
         self.add_token_object(TokenType::String, Some(Object::Str(literal)));
 
         Ok(())
+    }
+
+    fn read_comment(&mut self) -> Result<(), TeciError> {
+        loop {
+            match self.peek() {
+                Some('*') => {
+                    self.advance();
+                    if self.next_is_and_advance('/') {
+                        return Ok(());
+                    }
+                }
+                Some('/') => {
+                    self.advance();
+                    if self.next_is_and_advance('*') {
+                        self.read_comment()?;
+                    }
+                }
+                Some('\n') => {
+                    self.advance();
+                    self.line += 1;
+                }
+                None => {
+                    return Err(TeciError::new(
+                        self.line,
+                        "Unterminated comment.".to_string(),
+                    ));
+                }
+                _ => {
+                    self.advance();
+                }
+            }
+        }
     }
 
     fn read_number(&mut self) {
