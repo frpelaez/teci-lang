@@ -5,7 +5,10 @@ mod token_type;
 
 use crate::error::TeciError;
 use crate::scanner::Scanner;
-use std::{env::args, io};
+use std::{
+    env::args,
+    io::{self, Write, stdout},
+};
 
 fn main() {
     let args: Vec<String> = args().collect();
@@ -34,6 +37,7 @@ fn run_script(path: &String) -> io::Result<()> {
 fn run_prompt() {
     let stdin = io::stdin();
     print!(">> ");
+    let _ = stdout().flush();
     for line in stdin.lines() {
         if let Ok(line) = line {
             if line.is_empty() {
@@ -41,21 +45,23 @@ fn run_prompt() {
             }
             match run(line) {
                 Ok(_) => {}
-                Err(m) => {
-                    m.report("".to_string());
+                Err(_) => {
+                    // already reported
                 }
             }
         } else {
             break;
         }
+        print!(">> ");
+        let _ = stdout().flush();
     }
 }
 
 fn run(source: String) -> Result<(), TeciError> {
-    let scanner = Scanner::new(source);
+    let mut scanner = Scanner::new(source);
     let tokens = scanner.scan_tokens()?;
     for token in tokens {
-        print!("{:?}", token);
+        println!("{:?}", token);
     }
     Ok(())
 }
