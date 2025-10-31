@@ -26,8 +26,8 @@ fn run_script(path: &String) -> io::Result<()> {
     let buf = std::fs::read_to_string(path)?;
     match run(buf) {
         Ok(_) => {}
-        Err(m) => {
-            m.report("".to_string());
+        Err(_m) => {
+            // Error already reported
             std::process::exit(65);
         }
     }

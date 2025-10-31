@@ -90,16 +90,130 @@ impl Scanner {
                 };
                 self.add_token(ttype);
             }
-            _ => {
-                return Err(TeciError::new(
-                    self.line,
-                    "Unexpected character.".to_string(),
-                ));
+            '/' => {
+                if self.next_is_and_advance('/') {
+                    // Coments go with '//' and reach until the end of the line
+                    while let Some(ch) = self.peek() {
+                        if ch != '\n' {
+                            self.advance();
+                        } else {
+                            break;
+                        }
+                    }
+                } else {
+                    self.add_token(TokenType::Slash);
+                }
             }
+            ' ' | '\r' | '\t' => {}
+            '\n' => {
+                self.line += 1;
+            }
+            '"' => self.read_string()?,
+            '0'..='9' => self.read_number(),
+            _ => {
+                if c.is_ascii_alphabetic() || c == '_' {
+                    self.read_identifier()?;
+                }
+            } // _ => {
+              //     return Err(TeciError::new(
+              //         self.line,
+              //         "Unexpected character.".to_string(),
+              //     ));
+              // }
         }
         Ok(())
     }
 
+    fn read_identifier(&mut self) -> Result<(), TeciError> {
+        while Scanner::is_alphanumeric(self.peek()) {
+            self.advance();
+        }
+
+        let check: String = self
+            .source
+            .get(self.start..self.current)
+            .unwrap()
+            .iter()
+            .collect();
+        if let Some(ttype) = Scanner::keyword(check.as_str()) {
+            self.add_token(ttype);
+        } else {
+            self.add_token(TokenType::Identifier);
+        }
+
+        Ok(())
+    }
+
+    fn read_string(&mut self) -> Result<(), TeciError> {
+        while let Some(ch) = self.peek() {
+            match ch {
+                '"' => break,
+                '\n' => {
+                    self.line += 1;
+                }
+                _ => {}
+            }
+            self.advance();
+        }
+
+        if self.is_at_end() {
+            return Err(TeciError::new(
+                self.line,
+                "Unterminated string.".to_string(),
+            ));
+        }
+
+        self.advance();
+
+        // TODO: allow escape sequence, e.g. "\n"
+
+        let literal = self
+            .source
+            .get(self.start + 1..self.current - 1)
+            .unwrap()
+            .iter()
+            .collect();
+        self.add_token_object(TokenType::String, Some(Object::Str(literal)));
+
+        Ok(())
+    }
+
+    fn read_number(&mut self) {
+        while Scanner::is_digit(self.peek()) {
+            self.advance();
+        }
+
+        if self.peek() == Some('.') && Scanner::is_digit(self.peek_next()) {
+            self.advance();
+            while Scanner::is_digit(self.peek()) {
+                self.advance();
+            }
+        }
+
+        let value: String = self
+            .source
+            .get(self.start..self.current)
+            .unwrap()
+            .iter()
+            .collect();
+        self.add_token_object(TokenType::Number, Some(Object::Num(value.parse().unwrap())));
+    }
+
+    fn is_digit(ch: Option<char>) -> bool {
+        if let Some(ch) = ch {
+            ch.is_ascii_digit()
+        } else {
+            false
+        }
+    }
+
+    fn is_alphanumeric(ch: Option<char>) -> bool {
+        if let Some(ch) = ch {
+            ch.is_ascii_alphanumeric() || ch == '_'
+        } else {
+            false
+        }
+    }
     fn add_token(&mut self, ttype: TokenType) {
         self.add_token_object(ttype, None);
     }
@@ -126,10 +240,42 @@ impl Scanner {
     }
 
     fn next_is_and_advance(&mut self, expected: char) -> bool {
-        if self.is_at_end() || *self.source.get(self.current).unwrap() != expected {
-            return false;
+        match self.source.get(self.current) {
+            Some(ch) if *ch == expected => {
+                self.current += 1;
+                true
+            }
+            _ => false,
         }
-        self.current += 1;
-        true
+    }
+
+    fn peek(&self) -> Option<char> {
+        self.source.get(self.current).copied()
+    }
+
+    fn peek_next(&self) -> Option<char> {
+        self.source.get(self.current + 1).copied()
+    }
+
+    fn keyword(check: &str) -> Option<TokenType> {
+        match check {
+            "and" => Some(TokenType::And),
+            "class" => Some(TokenType::Class),
+            "else" => Some(TokenType::Else),
+            "false" => Some(TokenType::False),
+            "for" => Some(TokenType::For),
+            "fun" => Some(TokenType::Fun),
+            "if" => Some(TokenType::If),
+            "let" => Some(TokenType::Let),
+            "nil" => Some(TokenType::Nil),
+            "or" => Some(TokenType::Or),
+            "print" => Some(TokenType::Print),
+            "return" => Some(TokenType::Return),
+            "super" => Some(TokenType::Super),
+            "this" => Some(TokenType::This),
+            "true" => Some(TokenType::True),
+            "while" => Some(TokenType::While),
+            _ => None,
+        }
     }
 }
