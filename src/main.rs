@@ -1,4 +1,5 @@
 mod error;
+mod generate_ast;
 mod scanner;
 mod token;
 mod token_type;
