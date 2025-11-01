@@ -3,3 +3,6 @@
 
 # automatically generated files
 src/expr.rs
+
+# test files for teci-lang
+*.tc
