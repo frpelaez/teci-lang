@@ -1,6 +1,7 @@
-[package]
-name = "teci-lang"
-version = "0.1.0"
-edition = "2024"
+[workspace]
+resolver = "3"
+members = [
+    "main_app",
+    "generate_ast",
+]
 
-[dependencies]

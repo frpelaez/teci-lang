@@ -41,16 +41,19 @@ impl UnaryExpr {
         visitor.visit_unary_expr(self)
     }
 }
+
 impl BinaryExpr {
     fn accept<T>(&self, visitor: &dyn ExprVisitor<T>) -> Result<T, TeciError> {
         visitor.visit_binary_expr(self)
     }
 }
+
 impl GroupingExpr {
     fn accept<T>(&self, visitor: &dyn ExprVisitor<T>) -> Result<T, TeciError> {
         visitor.visit_grouping_expr(self)
     }
 }
+
 impl LiteralExpr {
     fn accept<T>(&self, visitor: &dyn ExprVisitor<T>) -> Result<T, TeciError> {
         visitor.visit_literal_expr(self)
