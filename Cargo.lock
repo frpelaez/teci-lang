@@ -3,12 +3,5 @@
 version = 4
 
 [[package]]
-name = "generate_ast"
+name = "teci-lang"
 version = "0.1.0"
-
-[[package]]
-name = "main_app"
-version = "0.1.0"
-dependencies = [
- "generate_ast",
-]
