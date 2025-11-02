@@ -61,7 +61,7 @@ fn define_ast(output_dir: &String, base_name: &String, types: &[String]) -> io::
     for t in &tree_types {
         writeln!(file, "\npub struct {} {{", t.class_name)?;
         for field in &t.fields {
-            writeln!(file, "    {},", field)?;
+            writeln!(file, "    pub {},", field)?;
         }
         writeln!(file, "}}")?;
     }
