@@ -47,7 +47,8 @@ fn define_ast(output_dir: &String, base_name: &String, types: &[String]) -> io::
         });
     }
 
-    writeln!(file, "\npub enum {base_name} {{")?;
+    writeln!(file, "\n#[derive(Clone)]")?;
+    writeln!(file, "pub enum {base_name} {{")?;
     for t in &tree_types {
         writeln!(
             file,
@@ -59,7 +60,8 @@ fn define_ast(output_dir: &String, base_name: &String, types: &[String]) -> io::
     writeln!(file, "}}")?;
 
     for t in &tree_types {
-        writeln!(file, "\npub struct {} {{", t.class_name)?;
+        writeln!(file, "\n#[derive(Clone)]")?;
+        writeln!(file, "pub struct {} {{", t.class_name)?;
         for field in &t.fields {
             writeln!(file, "    pub {},", field)?;
         }
@@ -82,7 +84,7 @@ fn define_ast(output_dir: &String, base_name: &String, types: &[String]) -> io::
         writeln!(file, "\nimpl {} {{", t.class_name)?;
         writeln!(
             file,
-            "    fn accept<T>(&self, visitor: &dyn {}Visitor<T>) -> Result<T, TeciError> {{",
+            "    pub fn accept<T>(&self, visitor: &dyn {}Visitor<T>) -> Result<T, TeciError> {{",
             base_name,
         )?;
         writeln!(

@@ -9,6 +9,17 @@ pub enum Expr {
     Unary(UnaryExpr),
 }
 
+impl Expr {
+    pub fn accept<T>(&self, visitor: &dyn ExprVisitor<T>) -> Result<T, TeciError> {
+        match self {
+            Expr::Binary(exp) => exp.accept(visitor),
+            Expr::Unary(exp) => exp.accept(visitor),
+            Expr::Grouping(exp) => exp.accept(visitor),
+            Expr::Literal(exp) => exp.accept(visitor),
+        }
+    }
+}
+
 #[derive(Clone)]
 pub struct BinaryExpr {
     pub left: Box<Expr>,
@@ -23,7 +34,7 @@ pub struct GroupingExpr {
 
 #[derive(Clone)]
 pub struct LiteralExpr {
-    pub value: Object,
+    pub value: Option<Object>,
 }
 
 #[derive(Clone)]
