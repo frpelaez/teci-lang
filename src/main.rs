@@ -1,13 +1,8 @@
 mod error;
 mod expr_hand;
-mod pretty_printer;
 mod scanner;
 mod token;
 mod token_type;
-
-use expr_hand::*;
-use pretty_printer::AstPrinter;
-use token::Token;
 
 use crate::error::TeciError;
 use crate::scanner::Scanner;
@@ -22,11 +17,7 @@ fn main() {
         println!("Usage: teci-lang [script]");
         std::process::exit(64);
     } else if args.len() == 2 {
-        if args.get(1).unwrap() == "test" {
-            run_test();
-        } else {
-            run_script(&args[1]).unwrap_or_else(|_| panic!("Could not run script {}", &args[1]));
-        }
+        run_script(&args[1]).unwrap_or_else(|_| panic!("Could not run script {}", &args[1]));
     } else {
         run_prompt();
     }
@@ -73,26 +64,5 @@ fn run(source: String) -> Result<(), TeciError> {
     for token in tokens {
         println!("{:?}", token);
     }
-    Ok(())
-}
-
-fn run_test() -> Result<(), TeciError> {
-    let expression = Expr::Binary(BinaryExpr {
-        left: Box::new(Expr::Literal(LiteralExpr {
-            value: Some(token::Object::Num(1.0)),
-        })),
-        operator: Token {
-            ttype: token_type::TokenType::Plus,
-            lexeme: "+".to_string(),
-            literal: None,
-            line: 1,
-        },
-        right: Box::new(Expr::Literal(LiteralExpr {
-            value: Some(token::Object::Num(2.0)),
-        })),
-    });
-
-    let printer = AstPrinter {};
-    println!("{}", printer.print(&expression)?);
     Ok(())
 }

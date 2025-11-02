@@ -17,7 +17,7 @@ pub fn generate_ast(output_dir: &String) -> io::Result<()> {
         &[
             "Binary     : Box<Expr> left, Token operator, Box<Expr> right".to_string(),
             "Grouping   : Box<Expr> expression".to_string(),
-            "Literal    : Object value".to_string(),
+            "Literal    : Option<Object> value".to_string(),
             "Unary      : Token operator, Box<Expr> right".to_string(),
         ],
     )
@@ -57,6 +57,24 @@ fn define_ast(output_dir: &String, base_name: &String, types: &[String]) -> io::
             t.class_name
         )?;
     }
+    writeln!(file, "}}")?;
+
+    writeln!(file, "\nimpl {} {{", base_name)?;
+    writeln!(
+        file,
+        "    pub fn accept<T>(&self, visitor: &dyn {}Visitor<T>) -> Result<T, TeciError> {{",
+        base_name
+    )?;
+    writeln!(file, "        match self {{")?;
+    for t in &tree_types {
+        writeln!(
+            file,
+            "            {}(exp) => exp.accept(visitor),",
+            t.base_class_name.trim()
+        )?;
+    }
+    writeln!(file, "        }}")?;
+    writeln!(file, "    }}")?;
     writeln!(file, "}}")?;
 
     for t in &tree_types {

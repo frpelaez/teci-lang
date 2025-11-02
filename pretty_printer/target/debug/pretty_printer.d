@@ -1,0 +1,1 @@
+C:\Users\franp\Rust\teci-lang\pretty_printer\target\debug\pretty_printer.exe: C:\Users\franp\Rust\teci-lang\pretty_printer\src\error.rs C:\Users\franp\Rust\teci-lang\pretty_printer\src\expr_hand.rs C:\Users\franp\Rust\teci-lang\pretty_printer\src\main.rs C:\Users\franp\Rust\teci-lang\pretty_printer\src\token.rs C:\Users\franp\Rust\teci-lang\pretty_printer\src\token_type.rs
