@@ -109,12 +109,7 @@ impl Parser {
                 value: Some(Object::Nil),
             }));
         }
-        if self.is_match(&[TokenType::String]) {
-            return Ok(Expr::Literal(LiteralExpr {
-                value: self.previous().literal,
-            }));
-        }
-        if self.is_match(&[TokenType::Number]) {
+        if self.is_match(&[TokenType::String, TokenType::Number]) {
             return Ok(Expr::Literal(LiteralExpr {
                 value: self.previous().literal,
             }));
@@ -123,7 +118,7 @@ impl Parser {
             let expr = self.expression()?;
             self.consume(
                 TokenType::RightParen,
-                "Expected ')' after expression.".to_string(),
+                "Expect ')' after expression.".to_string(),
             );
             return Ok(Expr::Grouping(GroupingExpr {
                 expression: Box::new(expr),
@@ -133,8 +128,12 @@ impl Parser {
         Err(TeciError::new(0, "you really screwed up".to_string()))
     }
 
-    fn consume(&mut self, ttype: TokenType, error_message: String) {
-        todo!()
+    fn consume(&mut self, ttype: TokenType, error_message: String) -> Result<Token, TeciError> {
+        if self.check(ttype) {
+            Ok(self.advance())
+        } else {
+            Err(TeciError::new(self.peek().line, error_message))
+        }
     }
 
     fn is_match(&mut self, types: &[TokenType]) -> bool {
