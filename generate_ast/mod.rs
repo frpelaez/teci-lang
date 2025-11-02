@@ -69,7 +69,7 @@ fn define_ast(output_dir: &String, base_name: &String, types: &[String]) -> io::
     for t in &tree_types {
         writeln!(
             file,
-            "            {}(exp) => exp.accept(visitor),",
+            "            {base_name}::{}(exp) => exp.accept(visitor),",
             t.base_class_name.trim()
         )?;
     }

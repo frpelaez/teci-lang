@@ -12,10 +12,10 @@ pub enum Expr {
 impl Expr {
     pub fn accept<T>(&self, visitor: &dyn ExprVisitor<T>) -> Result<T, TeciError> {
         match self {
-            Binary(exp) => exp.accept(visitor),
-            Grouping(exp) => exp.accept(visitor),
-            Literal(exp) => exp.accept(visitor),
-            Unary(exp) => exp.accept(visitor),
+            Expr::Binary(exp) => exp.accept(visitor),
+            Expr::Grouping(exp) => exp.accept(visitor),
+            Expr::Literal(exp) => exp.accept(visitor),
+            Expr::Unary(exp) => exp.accept(visitor),
         }
     }
 }

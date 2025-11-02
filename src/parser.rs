@@ -119,7 +119,7 @@ impl Parser {
             self.consume(
                 TokenType::RightParen,
                 "Expect ')' after expression.".to_string(),
-            );
+            )?;
             return Ok(Expr::Grouping(GroupingExpr {
                 expression: Box::new(expr),
             }));
@@ -138,7 +138,7 @@ impl Parser {
 
     fn is_match(&mut self, types: &[TokenType]) -> bool {
         for ttype in types {
-            if self.check(ttype.clone()) {
+            if self.check(*ttype) {
                 self.advance();
                 return true;
             }
