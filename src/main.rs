@@ -1,5 +1,6 @@
 mod error;
-mod expr_hand;
+mod expr;
+mod parser;
 mod scanner;
 mod token;
 mod token_type;
