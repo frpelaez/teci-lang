@@ -1,4 +1,6 @@
 mod error;
+mod expr;
+mod pretty_printer;
 mod scanner;
 mod token;
 mod token_type;

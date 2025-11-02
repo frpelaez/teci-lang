@@ -2,7 +2,7 @@
 /target
 
 # automatically generated files
-src/expr.rs
+# src/expr.rs
 
 # test files for teci-lang
 *.tc
