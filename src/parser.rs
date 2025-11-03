@@ -140,6 +140,29 @@ impl Parser {
         TeciError::parse_error(token, message)
     }
 
+    fn synchronize(&mut self) {
+        self.advance();
+        while !self.is_at_end() {
+            if self.previous().ttype == TokenType::Semicolon {
+                return;
+            }
+            if matches!(
+                self.peek().ttype,
+                TokenType::Class
+                    | TokenType::Fun
+                    | TokenType::Let
+                    | TokenType::For
+                    | TokenType::If
+                    | TokenType::While
+                    | TokenType::Print
+                    | TokenType::Return
+            ) {
+                return;
+            }
+        }
+        self.advance();
+    }
+
     fn is_match(&mut self, types: &[TokenType]) -> bool {
         for ttype in types {
             if self.check(*ttype) {
