@@ -132,8 +132,12 @@ impl Parser {
         if self.check(ttype) {
             Ok(self.advance())
         } else {
-            Err(TeciError::new(self.peek().line, error_message))
+            Err(Parser::error(self.peek(), error_message))
         }
+    }
+
+    fn error(token: Token, message: String) -> TeciError {
+        TeciError::parse_error(token, message)
     }
 
     fn is_match(&mut self, types: &[TokenType]) -> bool {
