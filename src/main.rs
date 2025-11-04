@@ -1,5 +1,6 @@
 mod error;
 mod expr;
+mod object;
 mod parser;
 mod pretty_printer;
 mod scanner;

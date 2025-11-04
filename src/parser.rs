@@ -1,7 +1,8 @@
 use crate::{
     error::TeciError,
     expr::{BinaryExpr, Expr, GroupingExpr, LiteralExpr, UnaryExpr},
-    token::{Object, Token},
+    object::Object,
+    token::Token,
     token_type::TokenType,
 };
 
@@ -21,6 +22,13 @@ impl Parser {
 
     fn expression(&mut self) -> Result<Expr, TeciError> {
         self.equality()
+        /* TODO: comma expressions -> create new kind of expression and parse it
+
+        let mut expr = self.equality()?;
+        while self.is_match(&[TokenType::Comma]) {
+            expr = self.equality()?;
+        }
+        Ok(expr) */
     }
 
     fn equality(&mut self) -> Result<Expr, TeciError> {

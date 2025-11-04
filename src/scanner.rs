@@ -1,8 +1,4 @@
-use crate::{
-    error::TeciError,
-    token::{Object, Token},
-    token_type::TokenType,
-};
+use crate::{error::TeciError, object::Object, token::Token, token_type::TokenType};
 
 #[allow(dead_code)]
 #[derive(Debug)]
