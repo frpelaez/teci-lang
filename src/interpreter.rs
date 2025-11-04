@@ -16,6 +16,7 @@ impl Interpreter {
             Object::Str(s) => !s.is_empty(),
             Object::Bool(b) => *b,
             Object::Nil => false,
+            Object::ArithmeticError => false,
         }
     }
 }
@@ -23,70 +24,34 @@ impl Interpreter {
 impl ExprVisitor<Object> for Interpreter {
     fn visit_unary_expr(&self, expr: &UnaryExpr) -> Result<Object, TeciError> {
         let right = self.evaluate(&expr.right)?;
-        match expr.operator.ttype {
-            TokenType::Minus => {
-                return if let Object::Num(x) = right {
-                    Ok(Object::Num(-x))
-                } else {
-                    Err(TeciError::new(
-                        expr.operator.line,
-                        "Negate operator '-' is not valid for non numeric operand",
-                    ))
-                };
-            }
-            TokenType::Bang => return Ok(Object::Bool(!Interpreter::is_truthy(&right))),
-            _ => {}
+        let result = match expr.operator.ttype {
+            TokenType::Minus => -right,
+            TokenType::Bang => Object::Bool(!Interpreter::is_truthy(&right)),
+            _ => Object::ArithmeticError,
+        };
+
+        if result == Object::ArithmeticError {
+            Err(TeciError::new(expr.operator.line, "Invalid operator"))
+        } else {
+            Ok(result)
         }
-        Err(TeciError::new(expr.operator.line, "Unreachable ???"))
     }
 
     fn visit_binary_expr(&self, expr: &BinaryExpr) -> Result<Object, TeciError> {
         let left = self.evaluate(&expr.left)?;
         let right = self.evaluate(&expr.right)?;
-        match expr.operator.ttype {
-            TokenType::Minus => {
-                if let (Object::Num(a), Object::Num(b)) = (&left, &right) {
-                    Ok(Object::Num(a - b))
-                } else {
-                    Err(TeciError::new(
-                        expr.operator.line,
-                        "Invalid operator '-' for non numeric",
-                    ))
-                }
-            }
-            TokenType::Star => {
-                if let (Object::Num(a), Object::Num(b)) = (&left, &right) {
-                    Ok(Object::Num(a * b))
-                } else {
-                    Err(TeciError::new(
-                        expr.operator.line,
-                        "Invalid operator '*' for non numeric operands",
-                    ))
-                }
-            }
-            TokenType::Slash => {
-                if let (Object::Num(a), Object::Num(b)) = (&left, &right) {
-                    Ok(Object::Num(a / b))
-                } else {
-                    Err(TeciError::new(
-                        expr.operator.line,
-                        "Invalid operator '/' for non numeric operands",
-                    ))
-                }
-            }
-            TokenType::Plus => {
-                if let (Object::Num(a), Object::Num(b)) = (&left, &right) {
-                    Ok(Object::Num(a + b))
-                } else if let (Object::Str(a), Object::Str(b)) = (left, right) {
-                    Ok(Object::Str(format!("{a}{b}")))
-                } else {
-                    Err(TeciError::new(
-                        expr.operator.line,
-                        "Invalid operator '+' for non numeric and non string operands",
-                    ))
-                }
-            }
-            _ => Err(TeciError::new(expr.operator.line, "Unimplemented (yet)")),
+        let result = match expr.operator.ttype {
+            TokenType::Minus => left - right,
+            TokenType::Star => left * right,
+            TokenType::Slash => left / right,
+            TokenType::Plus => left + right,
+            _ => Object::ArithmeticError,
+        };
+
+        if result == Object::ArithmeticError {
+            Err(TeciError::new(expr.operator.line, "Invalid operator"))
+        } else {
+            Ok(result)
         }
     }
 
@@ -219,7 +184,7 @@ mod tests {
     }
 
     #[test]
-    fn t_addition_strings() {
+    fn t_concatenation_strings() {
         let interpreter = Interpreter {};
         let expr = BinaryExpr {
             left: Box::new(Expr::Literal(LiteralExpr {

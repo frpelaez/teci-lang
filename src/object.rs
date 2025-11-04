@@ -1,4 +1,7 @@
-use std::fmt;
+use std::{
+    fmt,
+    ops::{Add, Div, Mul, Neg, Sub},
+};
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Object {
@@ -6,6 +9,7 @@ pub enum Object {
     Str(String),
     Bool(bool),
     Nil,
+    ArithmeticError,
 }
 
 impl fmt::Display for Object {
@@ -15,6 +19,60 @@ impl fmt::Display for Object {
             Self::Str(s) => write!(f, "{s}"),
             Self::Bool(b) => write!(f, "{b}"),
             Self::Nil => write!(f, "nil"),
+            Self::ArithmeticError => write!(f, "AArithmeticError"),
+        }
+    }
+}
+
+impl Neg for Object {
+    type Output = Self;
+    fn neg(self) -> Self::Output {
+        if let Object::Num(x) = self {
+            Object::Num(-x)
+        } else {
+            Object::ArithmeticError
+        }
+    }
+}
+
+impl Add for Object {
+    type Output = Self;
+    fn add(self, rhs: Self) -> Self::Output {
+        match (self, rhs) {
+            (Object::Num(left), Object::Num(right)) => Object::Num(left + right),
+            (Object::Str(left), Object::Str(right)) => Object::Str(format!("{left}{right}")),
+            _ => Object::ArithmeticError,
+        }
+    }
+}
+
+impl Sub for Object {
+    type Output = Self;
+    fn sub(self, rhs: Self) -> Self::Output {
+        match (self, rhs) {
+            (Object::Num(left), Object::Num(right)) => Object::Num(left - right),
+            _ => Object::ArithmeticError,
+        }
+    }
+}
+
+impl Mul for Object {
+    type Output = Self;
+    fn mul(self, rhs: Self) -> Self::Output {
+        match (self, rhs) {
+            (Object::Num(left), Object::Num(right)) => Object::Num(left * right),
+            _ => Self::ArithmeticError,
+        }
+    }
+}
+
+impl Div for Object {
+    type Output = Self;
+    fn div(self, rhs: Self) -> Self::Output {
+        match (self, rhs) {
+            (Object::Num(_), Object::Num(0.0)) => Object::ArithmeticError,
+            (Object::Num(left), Object::Num(right)) => Object::Num(left / right),
+            _ => Self::ArithmeticError,
         }
     }
 }
