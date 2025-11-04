@@ -26,7 +26,7 @@ impl Scanner {
         while !self.is_at_end() {
             self.start = self.current;
             if let Err(e) = self.scan_token() {
-                e.report("".to_string());
+                e.report("");
                 had_error = Some(e);
             }
         }
@@ -156,10 +156,7 @@ impl Scanner {
         }
 
         if self.is_at_end() {
-            return Err(TeciError::new(
-                self.line,
-                "Unterminated string.".to_string(),
-            ));
+            return Err(TeciError::new(self.line, "Unterminated string."));
         }
 
         self.advance();
@@ -197,10 +194,7 @@ impl Scanner {
                     self.line += 1;
                 }
                 None => {
-                    return Err(TeciError::new(
-                        self.line,
-                        "Unterminated comment.".to_string(),
-                    ));
+                    return Err(TeciError::new(self.line, "Unterminated comment."));
                 }
                 _ => {
                     self.advance();

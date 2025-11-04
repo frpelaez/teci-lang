@@ -128,19 +128,16 @@ impl Parser {
         }
         if self.is_match(&[TokenType::LeftParen]) {
             let expr = self.expression()?;
-            self.consume(
-                TokenType::RightParen,
-                "Expect ')' after expression.".to_string(),
-            )?;
+            self.consume(TokenType::RightParen, "Expect ')' after expression.")?;
             return Ok(Expr::Grouping(GroupingExpr {
                 expression: Box::new(expr),
             }));
         }
 
-        Err(TeciError::new(0, "unimplemented (yet)".to_string()))
+        Err(TeciError::new(0, "unimplemented (yet)"))
     }
 
-    fn consume(&mut self, ttype: TokenType, error_message: String) -> Result<Token, TeciError> {
+    fn consume(&mut self, ttype: TokenType, error_message: &str) -> Result<Token, TeciError> {
         if self.check(ttype) {
             Ok(self.advance())
         } else {
@@ -148,7 +145,7 @@ impl Parser {
         }
     }
 
-    fn error(token: Token, message: String) -> TeciError {
+    fn error(token: Token, message: &str) -> TeciError {
         TeciError::parse_error(token, message)
     }
 

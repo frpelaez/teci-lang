@@ -14,7 +14,7 @@ impl TeciError {
             line,
             message: message.to_string(),
         };
-        error.report("");
+        error.report("".to_string());
         error
     }
 
