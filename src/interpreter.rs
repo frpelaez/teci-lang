@@ -1,6 +1,7 @@
 use crate::error::TeciError;
 use crate::expr::*;
 use crate::object::Object;
+use crate::token::Token;
 use crate::token_type::TokenType;
 
 pub struct Interpreter;
@@ -17,6 +18,20 @@ impl Interpreter {
             Object::Bool(b) => *b,
             Object::Nil => false,
             Object::ArithmeticError => false,
+        }
+    }
+
+    fn check_numeric_operands(
+        left: &Object,
+        right: &Object,
+        operator: Token,
+    ) -> Result<(), TeciError> {
+        match (left, right) {
+            (Object::Num(_), Object::Num(_)) => Ok(()),
+            _ => Err(TeciError::runtime_error(
+                operator,
+                "Invalid operator for non numeric operands",
+            )),
         }
     }
 }
@@ -45,17 +60,32 @@ impl ExprVisitor<Object> for Interpreter {
             TokenType::Star => left * right,
             TokenType::Slash => left / right,
             TokenType::Plus => left + right,
-            TokenType::GreaterEqual => Object::Bool(left >= right),
-            TokenType::Greater => Object::Bool(left > right),
-            TokenType::LessEqual => Object::Bool(left <= right),
-            TokenType::Less => Object::Bool(left < right),
+            TokenType::GreaterEqual => {
+                Interpreter::check_numeric_operands(&left, &right, expr.operator.clone())?;
+                Object::Bool(left >= right)
+            }
+            TokenType::Greater => {
+                Interpreter::check_numeric_operands(&left, &right, expr.operator.clone())?;
+                Object::Bool(left > right)
+            }
+            TokenType::LessEqual => {
+                Interpreter::check_numeric_operands(&left, &right, expr.operator.clone())?;
+                Object::Bool(left <= right)
+            }
+            TokenType::Less => {
+                Interpreter::check_numeric_operands(&left, &right, expr.operator.clone())?;
+                Object::Bool(left < right)
+            }
             TokenType::Equals => Object::Bool(left == right),
             TokenType::BangEqual => Object::Bool(left != right),
             _ => Object::ArithmeticError,
         };
 
         if result == Object::ArithmeticError {
-            Err(TeciError::new(expr.operator.line, "Invalid operator"))
+            Err(TeciError::runtime_error(
+                expr.operator.clone(),
+                "Invalid operator",
+            ))
         } else {
             Ok(result)
         }
@@ -285,13 +315,10 @@ mod tests {
             })),
             operator: Token::new(TokenType::Less, "<".to_string(), None, 0),
             right: Box::new(Expr::Literal(LiteralExpr {
-                value: Some(Object::Num(56.0)),
+                value: Some(Object::Bool(true)),
             })),
         };
-        assert_eq!(
-            Object::Bool(true),
-            interpreter.visit_binary_expr(&expr).unwrap()
-        )
+        assert!(interpreter.visit_binary_expr(&expr).is_err())
     }
 
     #[test]

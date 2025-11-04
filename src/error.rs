@@ -29,6 +29,17 @@ impl TeciError {
         error
     }
 
+    pub fn runtime_error(token: Token, message: &str) -> TeciError {
+        let line = token.line;
+        let error = TeciError {
+            token: Some(token),
+            line,
+            message: message.to_string(),
+        };
+        error.report("");
+        error
+    }
+
     pub fn report(&self, loc: &str) {
         if let Some(token) = self.token.clone() {
             if token.ttype == TokenType::Eof {
