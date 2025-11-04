@@ -45,6 +45,12 @@ impl ExprVisitor<Object> for Interpreter {
             TokenType::Star => left * right,
             TokenType::Slash => left / right,
             TokenType::Plus => left + right,
+            TokenType::GreaterEqual => Object::Bool(left >= right),
+            TokenType::Greater => Object::Bool(left > right),
+            TokenType::LessEqual => Object::Bool(left <= right),
+            TokenType::Less => Object::Bool(left < right),
+            TokenType::Equals => Object::Bool(left == right),
+            TokenType::BangEqual => Object::Bool(left != right),
             _ => Object::ArithmeticError,
         };
 
@@ -199,5 +205,128 @@ mod tests {
             Object::Str("Hello World!".to_string()),
             interpreter.visit_binary_expr(&expr).unwrap()
         );
+    }
+
+    #[test]
+    fn t_arithmetic_error() {
+        let interpreter = Interpreter {};
+        let expr = BinaryExpr {
+            left: Box::new(Expr::Literal(LiteralExpr {
+                value: Some(Object::Str("Hello ".to_string())),
+            })),
+            operator: Token::new(TokenType::Minus, "-".to_string(), None, 0),
+            right: Box::new(Expr::Literal(LiteralExpr {
+                value: Some(Object::Str("World!".to_string())),
+            })),
+        };
+        assert!(interpreter.visit_binary_expr(&expr).is_err())
+    }
+
+    #[test]
+    fn t_greaterequal() {
+        let interpreter = Interpreter {};
+        let expr = BinaryExpr {
+            left: Box::new(Expr::Literal(LiteralExpr {
+                value: Some(Object::Num(16.0)),
+            })),
+            operator: Token::new(TokenType::GreaterEqual, ">=".to_string(), None, 0),
+            right: Box::new(Expr::Literal(LiteralExpr {
+                value: Some(Object::Num(6.0)),
+            })),
+        };
+        assert_eq!(
+            Object::Bool(true),
+            interpreter.visit_binary_expr(&expr).unwrap()
+        )
+    }
+
+    #[test]
+    fn t_greater() {
+        let interpreter = Interpreter {};
+        let expr = BinaryExpr {
+            left: Box::new(Expr::Literal(LiteralExpr {
+                value: Some(Object::Num(16.0)),
+            })),
+            operator: Token::new(TokenType::Greater, ">".to_string(), None, 0),
+            right: Box::new(Expr::Literal(LiteralExpr {
+                value: Some(Object::Num(6.0)),
+            })),
+        };
+        assert_eq!(
+            Object::Bool(true),
+            interpreter.visit_binary_expr(&expr).unwrap()
+        )
+    }
+
+    #[test]
+    fn t_lessequal() {
+        let interpreter = Interpreter {};
+        let expr = BinaryExpr {
+            left: Box::new(Expr::Literal(LiteralExpr {
+                value: Some(Object::Num(6.0)),
+            })),
+            operator: Token::new(TokenType::LessEqual, "<=".to_string(), None, 0),
+            right: Box::new(Expr::Literal(LiteralExpr {
+                value: Some(Object::Num(6.0)),
+            })),
+        };
+        assert_eq!(
+            Object::Bool(true),
+            interpreter.visit_binary_expr(&expr).unwrap()
+        )
+    }
+
+    #[test]
+    fn t_less() {
+        let interpreter = Interpreter {};
+        let expr = BinaryExpr {
+            left: Box::new(Expr::Literal(LiteralExpr {
+                value: Some(Object::Num(16.0)),
+            })),
+            operator: Token::new(TokenType::Less, "<".to_string(), None, 0),
+            right: Box::new(Expr::Literal(LiteralExpr {
+                value: Some(Object::Num(56.0)),
+            })),
+        };
+        assert_eq!(
+            Object::Bool(true),
+            interpreter.visit_binary_expr(&expr).unwrap()
+        )
+    }
+
+    #[test]
+    fn t_equals() {
+        let interpreter = Interpreter {};
+        let expr = BinaryExpr {
+            left: Box::new(Expr::Literal(LiteralExpr {
+                value: Some(Object::Str("hello".to_string())),
+            })),
+            operator: Token::new(TokenType::Equals, "==".to_string(), None, 0),
+            right: Box::new(Expr::Literal(LiteralExpr {
+                value: Some(Object::Str("hello".to_string())),
+            })),
+        };
+        assert_eq!(
+            Object::Bool(true),
+            interpreter.visit_binary_expr(&expr).unwrap()
+        )
+    }
+
+    #[test]
+    fn t_bangequals() {
+        let interpreter = Interpreter {};
+        let expr = BinaryExpr {
+            left: Box::new(Expr::Literal(LiteralExpr {
+                value: Some(Object::Nil),
+            })),
+            operator: Token::new(TokenType::BangEqual, "!=".to_string(), None, 0),
+            right: Box::new(Expr::Literal(LiteralExpr {
+                value: Some(Object::Str("sixteen".to_string())),
+            })),
+        };
+        assert_eq!(
+            Object::Bool(true),
+            interpreter.visit_binary_expr(&expr).unwrap()
+        )
     }
 }

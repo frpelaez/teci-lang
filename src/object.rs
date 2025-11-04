@@ -1,4 +1,5 @@
 use std::{
+    cmp::Ordering,
     fmt,
     ops::{Add, Div, Mul, Neg, Sub},
 };
@@ -73,6 +74,15 @@ impl Div for Object {
             (Object::Num(_), Object::Num(0.0)) => Object::ArithmeticError,
             (Object::Num(left), Object::Num(right)) => Object::Num(left / right),
             _ => Self::ArithmeticError,
+        }
+    }
+}
+
+impl PartialOrd for Object {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        match (self, other) {
+            (Object::Num(left), Object::Num(right)) => Some(left.partial_cmp(right)?),
+            _ => None,
         }
     }
 }
