@@ -68,9 +68,9 @@ fn run_prompt() {
 fn run(source: String) -> Result<(), TeciError> {
     let mut scanner = Scanner::new(source);
     let tokens = scanner.scan_tokens()?;
-    // for token in &tokens {
-    //     println!("{:?}", token);
-    // }
+    for token in &tokens {
+        println!("{:?}", token);
+    }
 
     let mut parser = Parser::new(tokens);
     let expr = parser.parse();

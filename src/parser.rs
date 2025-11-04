@@ -108,12 +108,12 @@ impl Parser {
     fn primary(&mut self) -> Result<Expr, TeciError> {
         if self.is_match(&[TokenType::False]) {
             return Ok(Expr::Literal(LiteralExpr {
-                value: Some(Object::False),
+                value: Some(Object::Bool(false)),
             }));
         }
         if self.is_match(&[TokenType::True]) {
             return Ok(Expr::Literal(LiteralExpr {
-                value: Some(Object::True),
+                value: Some(Object::Bool(true)),
             }));
         }
         if self.is_match(&[TokenType::Nil]) {

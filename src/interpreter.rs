@@ -14,8 +14,7 @@ impl Interpreter {
         match obj {
             Object::Num(x) => *x != 0.0,
             Object::Str(s) => !s.is_empty(),
-            Object::True => true,
-            Object::False => false,
+            Object::Bool(b) => !b,
             Object::Nil => false,
         }
     }
@@ -32,13 +31,7 @@ impl ExprVisitor<Object> for Interpreter {
                     Ok(Object::Nil)
                 };
             }
-            TokenType::Bang => {
-                return if Interpreter::is_truthy(&right) {
-                    Ok(Object::False)
-                } else {
-                    Ok(Object::True)
-                };
-            }
+            TokenType::Bang => return Ok(Object::Bool(!Interpreter::is_truthy(&right))),
             _ => {}
         }
         Err(TeciError::new(expr.operator.line, "Unreachable ???"))
