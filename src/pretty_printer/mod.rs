@@ -1,9 +1,4 @@
-mod error;
-mod expr_hand;
-mod token;
-mod token_type;
-
-use crate::{error::TeciError, expr_hand::*, token::Token};
+use crate::{error::TeciError, expr::*};
 
 pub struct AstPrinter;
 
@@ -42,25 +37,4 @@ impl ExprVisitor<String> for AstPrinter {
             Ok("nil".to_string())
         }
     }
-}
-
-fn main() -> Result<(), TeciError> {
-    let expression = Expr::Binary(BinaryExpr {
-        left: Box::new(Expr::Literal(LiteralExpr {
-            value: Some(token::Object::Num(1.0)),
-        })),
-        operator: Token {
-            ttype: token_type::TokenType::Plus,
-            lexeme: "+".to_string(),
-            literal: None,
-            line: 1,
-        },
-        right: Box::new(Expr::Literal(LiteralExpr {
-            value: Some(token::Object::Num(2.0)),
-        })),
-    });
-
-    let printer = AstPrinter {};
-    println!("{}", printer.print(&expression)?);
-    Ok(())
 }

@@ -1,12 +1,16 @@
 mod error;
 mod expr;
 mod parser;
+mod pretty_printer;
 mod scanner;
 mod token;
 mod token_type;
 
 use crate::error::TeciError;
+use crate::parser::Parser;
+use crate::pretty_printer::AstPrinter;
 use crate::scanner::Scanner;
+
 use std::{
     env::args,
     io::{self, Write, stdout},
@@ -62,8 +66,17 @@ fn run_prompt() {
 fn run(source: String) -> Result<(), TeciError> {
     let mut scanner = Scanner::new(source);
     let tokens = scanner.scan_tokens()?;
-    for token in tokens {
-        println!("{:?}", token);
+    // for token in &tokens {
+    //     println!("{:?}", token);
+    // }
+
+    let mut parser = Parser::new(tokens);
+    let expr = parser.parse();
+
+    let printer = AstPrinter {};
+    if let Some(expr) = expr {
+        println!("{}", printer.print(&expr)?);
     }
+
     Ok(())
 }

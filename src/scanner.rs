@@ -25,7 +25,7 @@ impl Scanner {
         }
     }
 
-    pub fn scan_tokens(&mut self) -> Result<&Vec<Token>, TeciError> {
+    pub fn scan_tokens(&mut self) -> Result<Vec<Token>, TeciError> {
         let mut had_error: Option<TeciError> = None;
         while !self.is_at_end() {
             self.start = self.current;
@@ -41,7 +41,7 @@ impl Scanner {
         if let Some(e) = had_error {
             Err(e)
         } else {
-            Ok(&self.tokens)
+            Ok(self.tokens.clone())
         }
     }
 

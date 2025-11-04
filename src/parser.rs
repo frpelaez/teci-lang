@@ -15,6 +15,10 @@ impl Parser {
         Self { tokens, current: 0 }
     }
 
+    pub fn parse(&mut self) -> Option<Expr> {
+        self.expression().ok()
+    }
+
     fn expression(&mut self) -> Result<Expr, TeciError> {
         self.equality()
     }
@@ -125,7 +129,7 @@ impl Parser {
             }));
         }
 
-        Err(TeciError::new(0, "you really screwed up".to_string()))
+        Err(TeciError::new(0, "unimplemented (yet)".to_string()))
     }
 
     fn consume(&mut self, ttype: TokenType, error_message: String) -> Result<Token, TeciError> {
