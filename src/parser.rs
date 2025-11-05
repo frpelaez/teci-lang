@@ -2,6 +2,7 @@ use crate::{
     error::TeciError,
     expr::{BinaryExpr, Expr, GroupingExpr, LiteralExpr, UnaryExpr},
     object::Object,
+    stmt::{ExpressionStmt, PrintStmt, Stmt},
     token::Token,
     token_type::TokenType,
 };
@@ -16,8 +17,36 @@ impl Parser {
         Self { tokens, current: 0 }
     }
 
-    pub fn parse(&mut self) -> Option<Expr> {
-        self.expression().ok()
+    pub fn parse(&mut self) -> Option<Vec<Stmt>> {
+        let mut statements = Vec::new();
+        while !self.is_at_end() {
+            if let Ok(stmt) = self.statement() {
+                statements.push(stmt);
+            } else {
+                return None;
+            }
+        }
+        Some(statements)
+    }
+
+    fn statement(&mut self) -> Result<Stmt, TeciError> {
+        if self.is_match(&[TokenType::Print]) {
+            self.print_statement()
+        } else {
+            self.expr_statement()
+        }
+    }
+
+    fn print_statement(&mut self) -> Result<Stmt, TeciError> {
+        let expr = self.expression()?;
+        self.consume(TokenType::Semicolon, "Expected ';' after expression")?;
+        Ok(Stmt::Print(PrintStmt { expression: expr }))
+    }
+
+    fn expr_statement(&mut self) -> Result<Stmt, TeciError> {
+        let expr = self.expression()?;
+        self.consume(TokenType::Semicolon, "Expected ';' after expression")?;
+        Ok(Stmt::Expression(ExpressionStmt { expression: expr }))
     }
 
     fn expression(&mut self) -> Result<Expr, TeciError> {

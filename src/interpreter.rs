@@ -1,20 +1,25 @@
 use crate::error::TeciError;
 use crate::expr::*;
 use crate::object::Object;
+use crate::stmt::{ExpressionStmt, PrintStmt, Stmt, StmtVisitor};
 use crate::token::Token;
 use crate::token_type::TokenType;
 
 pub struct Interpreter;
 
 impl Interpreter {
-    pub fn interpret(&self, expr: &Expr) -> Option<()> {
-        let value = self.evaluate(expr).ok();
-        if let Some(value) = value {
-            println!("{}", self.stringify(value));
-            Some(())
-        } else {
-            None
+    pub fn interpret(&self, statements: &Vec<Stmt>) -> Option<()> {
+        for stmt in statements {
+            if self.execute(stmt).is_ok() {
+            } else {
+                return None;
+            }
         }
+        Some(())
+    }
+
+    fn execute(&self, statement: &Stmt) -> Result<(), TeciError> {
+        statement.accept(self)
     }
 
     fn evaluate(&self, expr: &Expr) -> Result<Object, TeciError> {
@@ -46,7 +51,7 @@ impl Interpreter {
         }
     }
 
-    fn stringify(&self, value: Object) -> String {
+    pub fn stringify(value: Object) -> String {
         match value {
             Object::Num(x) => {
                 let mut text = x.to_string();
@@ -130,6 +135,19 @@ impl ExprVisitor<Object> for Interpreter {
 
     fn visit_literal_expr(&self, expr: &LiteralExpr) -> Result<Object, TeciError> {
         Ok(expr.value.clone().unwrap())
+    }
+}
+
+impl StmtVisitor<()> for Interpreter {
+    fn visit_print_stmt(&self, stmt: &PrintStmt) -> Result<(), TeciError> {
+        let value = self.evaluate(&stmt.expression)?;
+        println!("{}", Interpreter::stringify(value));
+        Ok(())
+    }
+
+    fn visit_expression_stmt(&self, stmt: &ExpressionStmt) -> Result<(), TeciError> {
+        self.evaluate(&stmt.expression)?;
+        Ok(())
     }
 }
 

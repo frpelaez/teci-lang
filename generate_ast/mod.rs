@@ -15,6 +15,11 @@ pub fn generate_ast(output_dir: &String) -> io::Result<()> {
         output_dir,
         &"Expr".to_string(),
         &[
+            "token".to_string(),
+            "object".to_string(),
+            "error".to_string(),
+        ],
+        &[
             "Binary     : Box<Expr> left, Token operator, Box<Expr> right".to_string(),
             "Grouping   : Box<Expr> expression".to_string(),
             "Literal    : Option<Object> value".to_string(),
@@ -25,6 +30,7 @@ pub fn generate_ast(output_dir: &String) -> io::Result<()> {
     define_ast(
         output_dir,
         &"Stmt".to_string(),
+        &["error".to_string(), "expr".to_string()],
         &[
             "Expression : Expr expression".to_string(),
             "Print      : Expr expression".to_string(),
@@ -32,14 +38,19 @@ pub fn generate_ast(output_dir: &String) -> io::Result<()> {
     )
 }
 
-fn define_ast(output_dir: &String, base_name: &String, types: &[String]) -> io::Result<()> {
+fn define_ast(
+    output_dir: &String,
+    base_name: &String,
+    imports: &[String],
+    types: &[String],
+) -> io::Result<()> {
     let path = format!("{output_dir}/{}.rs", base_name.to_lowercase());
     let mut file = File::create(path)?;
     let mut tree_types = Vec::new();
 
-    writeln!(file, "use crate::error::*;")?;
-    writeln!(file, "use crate::token::*;")?;
-    writeln!(file, "use crate::object::*;")?;
+    for module in imports {
+        writeln!(file, "use crate::{}::*;", module)?;
+    }
 
     for ttype in types {
         let (base_class_name, args) = ttype.split_once(":").unwrap();

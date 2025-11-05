@@ -295,6 +295,7 @@ impl Scanner {
             "nil" => Some(TokenType::Nil),
             "or" => Some(TokenType::Or),
             "print" => Some(TokenType::Print),
+            "escuchadmebien" => Some(TokenType::Print),
             "return" => Some(TokenType::Return),
             "super" => Some(TokenType::Super),
             "this" => Some(TokenType::This),

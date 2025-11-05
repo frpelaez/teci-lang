@@ -3,8 +3,9 @@ mod expr;
 mod interpreter;
 mod object;
 mod parser;
-mod pretty_printer;
+// mod pretty_printer;
 mod scanner;
+mod stmt;
 mod token;
 mod token_type;
 
@@ -34,12 +35,8 @@ fn main() {
 
 fn run_script(path: &String) -> io::Result<()> {
     let buf = std::fs::read_to_string(path)?;
-    match run(buf) {
-        Ok(_) => {}
-        Err(_m) => {
-            // Error already reported
-            std::process::exit(65);
-        }
+    if run(buf).is_err() {
+        std::process::exit(65);
     }
     Ok(())
 }
@@ -75,7 +72,7 @@ fn run(source: String) -> Result<(), TeciError> {
     // }
 
     let mut parser = Parser::new(tokens);
-    let expr = parser.parse();
+    let statements = parser.parse();
 
     // let printer = AstPrinter {};
     // if let Some(expr) = &expr {
@@ -83,8 +80,8 @@ fn run(source: String) -> Result<(), TeciError> {
     // }
 
     let interpreter = Interpreter {};
-    if let Some(expr) = expr {
-        if interpreter.interpret(&expr).is_some() {}
+    if let Some(stmts) = statements {
+        interpreter.interpret(&stmts);
     }
 
     Ok(())

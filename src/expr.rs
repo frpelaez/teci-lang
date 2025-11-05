@@ -1,6 +1,6 @@
-use crate::error::*;
 use crate::token::*;
 use crate::object::*;
+use crate::error::*;
 
 #[derive(Clone)]
 pub enum Expr {
