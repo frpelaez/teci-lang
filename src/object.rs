@@ -11,6 +11,7 @@ pub enum Object {
     Bool(bool),
     Nil,
     ArithmeticError,
+    DivisionByZeroError,
 }
 
 impl fmt::Display for Object {
@@ -20,7 +21,8 @@ impl fmt::Display for Object {
             Self::Str(s) => write!(f, "{s}"),
             Self::Bool(b) => write!(f, "{b}"),
             Self::Nil => write!(f, "nil"),
-            Self::ArithmeticError => write!(f, "AArithmeticError"),
+            Self::ArithmeticError => write!(f, "ArithmeticError"),
+            Self::DivisionByZeroError => write!(f, "DivisionByZeroError"),
         }
     }
 }
@@ -42,6 +44,8 @@ impl Add for Object {
         match (self, rhs) {
             (Object::Num(left), Object::Num(right)) => Object::Num(left + right),
             (Object::Str(left), Object::Str(right)) => Object::Str(format!("{left}{right}")),
+            (Object::Str(left), Object::Num(right)) => Object::Str(format!("{left}{right}")),
+            (Object::Num(left), Object::Str(right)) => Object::Str(format!("{left}{right}")),
             _ => Object::ArithmeticError,
         }
     }
@@ -71,7 +75,7 @@ impl Div for Object {
     type Output = Self;
     fn div(self, rhs: Self) -> Self::Output {
         match (self, rhs) {
-            (Object::Num(_), Object::Num(0.0)) => Object::ArithmeticError,
+            (Object::Num(_), Object::Num(0.0)) => Object::DivisionByZeroError,
             (Object::Num(left), Object::Num(right)) => Object::Num(left / right),
             _ => Self::ArithmeticError,
         }

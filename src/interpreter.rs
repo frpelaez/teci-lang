@@ -28,6 +28,7 @@ impl Interpreter {
             Object::Bool(b) => *b,
             Object::Nil => false,
             Object::ArithmeticError => false,
+            Object::DivisionByZeroError => false,
         }
     }
 
@@ -58,6 +59,7 @@ impl Interpreter {
             Object::Bool(b) => b.to_string(),
             Object::Nil => "nil".to_string(),
             Object::ArithmeticError => "arithmetic_error!!!".to_string(),
+            Object::DivisionByZeroError => "division_by_zero_error!!!".to_string(),
         }
     }
 }
@@ -111,6 +113,11 @@ impl ExprVisitor<Object> for Interpreter {
             Err(TeciError::runtime_error(
                 expr.operator.clone(),
                 "Invalid operator",
+            ))
+        } else if result == Object::DivisionByZeroError {
+            Err(TeciError::runtime_error(
+                expr.operator.clone(),
+                "Division by zero",
             ))
         } else {
             Ok(result)
