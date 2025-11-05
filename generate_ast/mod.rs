@@ -20,6 +20,15 @@ pub fn generate_ast(output_dir: &String) -> io::Result<()> {
             "Literal    : Option<Object> value".to_string(),
             "Unary      : Token operator, Box<Expr> right".to_string(),
         ],
+    )?;
+
+    define_ast(
+        output_dir,
+        &"Stmt".to_string(),
+        &[
+            "Expression : Expr expression".to_string(),
+            "Print      : Expr expression".to_string(),
+        ],
     )
 }
 
@@ -87,7 +96,7 @@ fn define_ast(output_dir: &String, base_name: &String, types: &[String]) -> io::
         writeln!(file, "}}")?;
     }
 
-    writeln!(file, "\npub trait ExprVisitor<T> {{")?;
+    writeln!(file, "\npub trait {}Visitor<T> {{", base_name)?;
     for t in &tree_types {
         writeln!(
             file,
