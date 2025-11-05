@@ -1,8 +1,8 @@
 use crate::{
     error::TeciError,
-    expr::{BinaryExpr, Expr, GroupingExpr, LiteralExpr, UnaryExpr},
+    expr::{BinaryExpr, Expr, GroupingExpr, LiteralExpr, UnaryExpr, VariableExpr},
     object::Object,
-    stmt::{ExpressionStmt, PrintStmt, Stmt},
+    stmt::{ExpressionStmt, LetStmt, PrintStmt, Stmt},
     token::Token,
     token_type::TokenType,
 };
@@ -17,16 +17,38 @@ impl Parser {
         Self { tokens, current: 0 }
     }
 
-    pub fn parse(&mut self) -> Option<Vec<Stmt>> {
+    pub fn parse(&mut self) -> Result<Vec<Stmt>, TeciError> {
         let mut statements = Vec::new();
         while !self.is_at_end() {
-            if let Ok(stmt) = self.statement() {
-                statements.push(stmt);
-            } else {
-                return None;
-            }
+            statements.push(self.declaration()?);
         }
-        Some(statements)
+        Ok(statements)
+    }
+
+    fn declaration(&mut self) -> Result<Stmt, TeciError> {
+        let res = if self.is_match(&[TokenType::Let]) {
+            self.let_declaration()
+        } else {
+            self.statement()
+        };
+        if res.is_err() {
+            self.synchronize();
+        };
+        res
+    }
+
+    fn let_declaration(&mut self) -> Result<Stmt, TeciError> {
+        let name = self.consume(TokenType::Identifier, "Expected variable name")?;
+        let initializer = if self.is_match(&[TokenType::Assign]) {
+            Some(self.expression()?)
+        } else {
+            None
+        };
+        self.consume(
+            TokenType::Semicolon,
+            "Expected ';' after variable declaration",
+        )?;
+        Ok(Stmt::Let(LetStmt { name, initializer }))
     }
 
     fn statement(&mut self) -> Result<Stmt, TeciError> {
@@ -160,6 +182,11 @@ impl Parser {
             self.consume(TokenType::RightParen, "Expected ')' after expression")?;
             return Ok(Expr::Grouping(GroupingExpr {
                 expression: Box::new(expr),
+            }));
+        }
+        if self.is_match(&[TokenType::Identifier]) {
+            return Ok(Expr::Variable(VariableExpr {
+                name: self.previous(),
             }));
         }
 

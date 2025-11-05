@@ -14,26 +14,24 @@ pub fn generate_ast(output_dir: &String) -> io::Result<()> {
     define_ast(
         output_dir,
         &"Expr".to_string(),
+        &["token", "object", "error"],
         &[
-            "token".to_string(),
-            "object".to_string(),
-            "error".to_string(),
-        ],
-        &[
-            "Binary     : Box<Expr> left, Token operator, Box<Expr> right".to_string(),
-            "Grouping   : Box<Expr> expression".to_string(),
-            "Literal    : Option<Object> value".to_string(),
-            "Unary      : Token operator, Box<Expr> right".to_string(),
+            "Binary     : Box<Expr> left, Token operator, Box<Expr> right",
+            "Grouping   : Box<Expr> expression",
+            "Literal    : Option<Object> value",
+            "Unary      : Token operator, Box<Expr> right",
+            "Variable   : Token name",
         ],
     )?;
 
     define_ast(
         output_dir,
         &"Stmt".to_string(),
-        &["error".to_string(), "expr".to_string()],
+        &["error", "expr", "token"],
         &[
-            "Expression : Expr expression".to_string(),
-            "Print      : Expr expression".to_string(),
+            "Expression : Expr expression",
+            "Print      : Expr expression",
+            "Let        : Token name, Option<Expr> initializer",
         ],
     )
 }
@@ -41,8 +39,8 @@ pub fn generate_ast(output_dir: &String) -> io::Result<()> {
 fn define_ast(
     output_dir: &String,
     base_name: &String,
-    imports: &[String],
-    types: &[String],
+    imports: &[&str],
+    types: &[&str],
 ) -> io::Result<()> {
     let path = format!("{output_dir}/{}.rs", base_name.to_lowercase());
     let mut file = File::create(path)?;

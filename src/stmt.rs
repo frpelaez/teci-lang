@@ -1,10 +1,12 @@
 use crate::error::*;
 use crate::expr::*;
+use crate::token::*;
 
 #[derive(Clone)]
 pub enum Stmt {
     Expression(ExpressionStmt),
     Print(PrintStmt),
+    Let(LetStmt),
 }
 
 impl Stmt {
@@ -12,6 +14,7 @@ impl Stmt {
         match self {
             Stmt::Expression(exp) => exp.accept(visitor),
             Stmt::Print(exp) => exp.accept(visitor),
+            Stmt::Let(exp) => exp.accept(visitor),
         }
     }
 }
@@ -26,9 +29,16 @@ pub struct PrintStmt {
     pub expression: Expr,
 }
 
+#[derive(Clone)]
+pub struct LetStmt {
+    pub name: Token,
+    pub initializer: Option<Expr>,
+}
+
 pub trait StmtVisitor<T> {
     fn visit_expression_stmt(&self, expr: &ExpressionStmt) -> Result<T, TeciError>;
     fn visit_print_stmt(&self, expr: &PrintStmt) -> Result<T, TeciError>;
+    fn visit_let_stmt(&self, expr: &LetStmt) -> Result<T, TeciError>;
 }
 
 impl ExpressionStmt {
@@ -40,5 +50,11 @@ impl ExpressionStmt {
 impl PrintStmt {
     pub fn accept<T>(&self, visitor: &dyn StmtVisitor<T>) -> Result<T, TeciError> {
         visitor.visit_print_stmt(self)
+    }
+}
+
+impl LetStmt {
+    pub fn accept<T>(&self, visitor: &dyn StmtVisitor<T>) -> Result<T, TeciError> {
+        visitor.visit_let_stmt(self)
     }
 }

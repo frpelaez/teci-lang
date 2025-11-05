@@ -80,7 +80,7 @@ fn run(source: String) -> Result<(), TeciError> {
     // }
 
     let interpreter = Interpreter {};
-    if let Some(stmts) = statements {
+    if let Ok(stmts) = statements {
         interpreter.interpret(&stmts);
     }
 

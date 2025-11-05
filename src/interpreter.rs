@@ -136,6 +136,10 @@ impl ExprVisitor<Object> for Interpreter {
     fn visit_literal_expr(&self, expr: &LiteralExpr) -> Result<Object, TeciError> {
         Ok(expr.value.clone().unwrap())
     }
+
+    fn visit_variable_expr(&self, expr: &VariableExpr) -> Result<Object, TeciError> {
+        todo!()
+    }
 }
 
 impl StmtVisitor<()> for Interpreter {
@@ -148,6 +152,10 @@ impl StmtVisitor<()> for Interpreter {
     fn visit_expression_stmt(&self, stmt: &ExpressionStmt) -> Result<(), TeciError> {
         self.evaluate(&stmt.expression)?;
         Ok(())
+    }
+
+    fn visit_let_stmt(&self, expr: &crate::stmt::LetStmt) -> Result<(), TeciError> {
+        todo!()
     }
 }
 
