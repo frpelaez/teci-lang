@@ -7,6 +7,16 @@ use crate::token_type::TokenType;
 pub struct Interpreter;
 
 impl Interpreter {
+    pub fn interpret(&self, expr: &Expr) -> Option<()> {
+        let value = self.evaluate(expr).ok();
+        if let Some(value) = value {
+            println!("{}", self.stringify(value));
+            Some(())
+        } else {
+            None
+        }
+    }
+
     fn evaluate(&self, expr: &Expr) -> Result<Object, TeciError> {
         expr.accept(self)
     }
@@ -32,6 +42,22 @@ impl Interpreter {
                 operator,
                 "Invalid operator for non numeric operands",
             )),
+        }
+    }
+
+    fn stringify(&self, value: Object) -> String {
+        match value {
+            Object::Num(x) => {
+                let mut text = x.to_string();
+                if text.ends_with(".0") {
+                    text = text.get(0..text.len() - 2).unwrap().to_string();
+                }
+                text
+            }
+            Object::Str(s) => s,
+            Object::Bool(b) => b.to_string(),
+            Object::Nil => "nil".to_string(),
+            Object::ArithmeticError => "arithmetic_error!!!".to_string(),
         }
     }
 }

@@ -43,11 +43,11 @@ impl TeciError {
     pub fn report(&self, loc: &str) {
         if let Some(token) = self.token.clone() {
             if token.ttype == TokenType::Eof {
-                eprintln!("[line {}] Error: at end {}", self.line, self.message);
+                eprintln!("[line {}] Error: {} at end", self.line, self.message);
             } else {
                 eprintln!(
-                    "[line {}] Error: {} at {}",
-                    self.line, token.lexeme, self.message
+                    "[line {}] Error: {} at '{}'",
+                    self.line, self.message, token.lexeme
                 )
             }
         } else {

@@ -8,9 +8,11 @@ mod scanner;
 mod token;
 mod token_type;
 
+use interpreter::Interpreter;
+
 use crate::error::TeciError;
 use crate::parser::Parser;
-use crate::pretty_printer::AstPrinter;
+// use crate::pretty_printer::AstPrinter;
 use crate::scanner::Scanner;
 
 use std::{
@@ -68,16 +70,21 @@ fn run_prompt() {
 fn run(source: String) -> Result<(), TeciError> {
     let mut scanner = Scanner::new(source);
     let tokens = scanner.scan_tokens()?;
-    for token in &tokens {
-        println!("{:?}", token);
-    }
+    // for token in &tokens {
+    //     println!("{:?}", token);
+    // }
 
     let mut parser = Parser::new(tokens);
     let expr = parser.parse();
 
-    let printer = AstPrinter {};
+    // let printer = AstPrinter {};
+    // if let Some(expr) = &expr {
+    //     println!("{}", printer.print(expr)?);
+    // }
+
+    let interpreter = Interpreter {};
     if let Some(expr) = expr {
-        println!("{}", printer.print(&expr)?);
+        if interpreter.interpret(&expr).is_some() {}
     }
 
     Ok(())
