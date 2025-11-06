@@ -10,11 +10,16 @@ use crate::{
 pub struct Parser {
     tokens: Vec<Token>,
     current: usize,
+    had_error: bool,
 }
 
 impl Parser {
     pub fn new(tokens: Vec<Token>) -> Self {
-        Self { tokens, current: 0 }
+        Self {
+            tokens,
+            current: 0,
+            had_error: false,
+        }
     }
 
     pub fn parse(&mut self) -> Result<Vec<Stmt>, TeciError> {
@@ -23,6 +28,10 @@ impl Parser {
             statements.push(self.declaration()?);
         }
         Ok(statements)
+    }
+
+    pub fn succeded(&self) -> bool {
+        !self.had_error
     }
 
     fn declaration(&mut self) -> Result<Stmt, TeciError> {
@@ -72,7 +81,7 @@ impl Parser {
     }
 
     fn expression(&mut self) -> Result<Expr, TeciError> {
-        self.equality()
+        self.assignment()
         /* TODO: comma expressions -> create new kind of expression and parse it
 
         let mut expr = self.equality()?;
@@ -80,6 +89,10 @@ impl Parser {
             expr = self.equality()?;
         }
         Ok(expr) */
+    }
+
+    fn assignment(&mut self) -> Result<Expr, TeciError> {
+        self.equality()
     }
 
     fn equality(&mut self) -> Result<Expr, TeciError> {
@@ -197,11 +210,12 @@ impl Parser {
         if self.check(ttype) {
             Ok(self.advance())
         } else {
-            Err(Parser::error(self.peek(), error_message))
+            Err(self.error(self.peek(), error_message))
         }
     }
 
-    fn error(token: Token, message: &str) -> TeciError {
+    fn error(&mut self, token: Token, message: &str) -> TeciError {
+        self.had_error = true;
         TeciError::parse_error(token, message)
     }
 

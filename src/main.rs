@@ -68,21 +68,13 @@ fn run_prompt() {
 fn run(source: String) -> Result<(), TeciError> {
     let mut scanner = Scanner::new(source);
     let tokens = scanner.scan_tokens()?;
-    // for token in &tokens {
-    //     println!("{:?}", token);
-    // }
 
     let mut parser = Parser::new(tokens);
-    let statements = parser.parse();
+    let statements = parser.parse()?;
 
-    // let printer = AstPrinter {};
-    // if let Some(expr) = &expr {
-    //     println!("{}", printer.print(expr)?);
-    // }
-
-    let interpreter = Interpreter::new();
-    if let Ok(stmts) = statements {
-        interpreter.interpret(&stmts);
+    if parser.succeded() {
+        let interpreter = Interpreter::new();
+        if let Some(()) = interpreter.interpret(&statements) {}
     }
 
     Ok(())
