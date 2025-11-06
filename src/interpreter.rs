@@ -81,6 +81,14 @@ impl Interpreter {
 }
 
 impl ExprVisitor<Object> for Interpreter {
+    fn visit_assign_expr(&self, expr: &AssignExpr) -> Result<Object, TeciError> {
+        let value = self.evaluate(&expr.value)?;
+        self.enviroment
+            .borrow_mut()
+            .assign(&expr.name, value.clone())?;
+        Ok(value)
+    }
+
     fn visit_unary_expr(&self, expr: &UnaryExpr) -> Result<Object, TeciError> {
         let right = self.evaluate(&expr.right)?;
         let result = match expr.operator.ttype {

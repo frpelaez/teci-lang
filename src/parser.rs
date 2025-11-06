@@ -1,6 +1,6 @@
 use crate::{
     error::TeciError,
-    expr::{BinaryExpr, Expr, GroupingExpr, LiteralExpr, UnaryExpr, VariableExpr},
+    expr::{AssignExpr, BinaryExpr, Expr, GroupingExpr, LiteralExpr, UnaryExpr, VariableExpr},
     object::Object,
     stmt::{ExpressionStmt, LetStmt, PrintStmt, Stmt},
     token::Token,
@@ -92,7 +92,20 @@ impl Parser {
     }
 
     fn assignment(&mut self) -> Result<Expr, TeciError> {
-        self.equality()
+        let expr = self.equality()?;
+        if self.is_match(&[TokenType::Assign]) {
+            let equals = self.previous();
+            let value = self.assignment()?;
+            if let Expr::Variable(var_exp) = expr {
+                let name = var_exp.name;
+                return Ok(Expr::Assign(AssignExpr {
+                    name,
+                    value: Box::new(value),
+                }));
+            }
+            self.error(equals, "Invalid assignment target");
+        }
+        Ok(expr)
     }
 
     fn equality(&mut self) -> Result<Expr, TeciError> {

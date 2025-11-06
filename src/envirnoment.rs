@@ -1,4 +1,4 @@
-use std::collections::hash_map::HashMap;
+use std::collections::hash_map::{Entry, HashMap};
 
 use crate::{error::TeciError, object::Object, token::Token};
 
@@ -24,6 +24,18 @@ impl Envirnoment {
             Err(TeciError::runtime_error(
                 name.clone(),
                 format!("Undefined variable {}", name.lexeme).as_str(),
+            ))
+        }
+    }
+
+    pub fn assign(&mut self, name: &Token, value: Object) -> Result<(), TeciError> {
+        if let Entry::Occupied(mut object) = self.values.entry(name.lexeme.clone()) {
+            object.insert(value);
+            Ok(())
+        } else {
+            Err(TeciError::runtime_error(
+                name.clone(),
+                &format!("Undefined variable '{}'", name.lexeme),
             ))
         }
     }
