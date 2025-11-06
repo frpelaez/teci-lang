@@ -1,13 +1,24 @@
+use std::cell::RefCell;
+
+use crate::envirnoment::Envirnoment;
 use crate::error::TeciError;
 use crate::expr::*;
 use crate::object::Object;
-use crate::stmt::{ExpressionStmt, PrintStmt, Stmt, StmtVisitor};
+use crate::stmt::{ExpressionStmt, LetStmt, PrintStmt, Stmt, StmtVisitor};
 use crate::token::Token;
 use crate::token_type::TokenType;
 
-pub struct Interpreter;
+pub struct Interpreter {
+    enviroment: RefCell<Envirnoment>,
+}
 
 impl Interpreter {
+    pub fn new() -> Self {
+        Self {
+            enviroment: RefCell::new(Envirnoment::new()),
+        }
+    }
+
     pub fn interpret(&self, statements: &Vec<Stmt>) -> Option<()> {
         for stmt in statements {
             if self.execute(stmt).is_ok() {
@@ -138,7 +149,7 @@ impl ExprVisitor<Object> for Interpreter {
     }
 
     fn visit_variable_expr(&self, expr: &VariableExpr) -> Result<Object, TeciError> {
-        todo!()
+        self.enviroment.borrow().get(&expr.name)
     }
 }
 
@@ -154,8 +165,16 @@ impl StmtVisitor<()> for Interpreter {
         Ok(())
     }
 
-    fn visit_let_stmt(&self, expr: &crate::stmt::LetStmt) -> Result<(), TeciError> {
-        todo!()
+    fn visit_let_stmt(&self, stmt: &LetStmt) -> Result<(), TeciError> {
+        let value = if let Some(initializer) = &stmt.initializer {
+            self.evaluate(initializer)?
+        } else {
+            Object::Nil
+        };
+        self.enviroment
+            .borrow_mut()
+            .define(stmt.name.lexeme.clone(), value);
+        Ok(())
     }
 }
 
@@ -166,7 +185,7 @@ mod tests {
 
     #[test]
     fn t_unary_minus() {
-        let interpreter = Interpreter {};
+        let interpreter = Interpreter::new();
         let unary = UnaryExpr {
             operator: Token::new(TokenType::Minus, "-".to_string(), None, 0),
             right: Box::new(Expr::Literal(LiteralExpr {
@@ -181,7 +200,7 @@ mod tests {
 
     #[test]
     fn t_unary_bang() {
-        let interpreter = Interpreter {};
+        let interpreter = Interpreter::new();
         let boolean = UnaryExpr {
             operator: Token::new(TokenType::Bang, "!".to_string(), None, 0),
             right: Box::new(Expr::Literal(LiteralExpr {
@@ -196,7 +215,7 @@ mod tests {
 
     #[test]
     fn t_substraction() {
-        let interpreter = Interpreter {};
+        let interpreter = Interpreter::new();
         let expr = BinaryExpr {
             left: Box::new(Expr::Literal(LiteralExpr {
                 value: Some(Object::Num(70.0)),
@@ -217,7 +236,7 @@ mod tests {
 
     #[test]
     fn t_mulitplication() {
-        let interpreter = Interpreter {};
+        let interpreter = Interpreter::new();
         let expr = BinaryExpr {
             left: Box::new(Expr::Literal(LiteralExpr {
                 value: Some(Object::Num(70.0)),
@@ -238,7 +257,7 @@ mod tests {
 
     #[test]
     fn t_division() {
-        let interpreter = Interpreter {};
+        let interpreter = Interpreter::new();
         let expr = BinaryExpr {
             left: Box::new(Expr::Literal(LiteralExpr {
                 value: Some(Object::Num(70.0)),
@@ -259,7 +278,7 @@ mod tests {
 
     #[test]
     fn t_addition_numbers() {
-        let interpreter = Interpreter {};
+        let interpreter = Interpreter::new();
         let expr = BinaryExpr {
             left: Box::new(Expr::Literal(LiteralExpr {
                 value: Some(Object::Num(70.0)),
@@ -280,7 +299,7 @@ mod tests {
 
     #[test]
     fn t_concatenation_strings() {
-        let interpreter = Interpreter {};
+        let interpreter = Interpreter::new();
         let expr = BinaryExpr {
             left: Box::new(Expr::Literal(LiteralExpr {
                 value: Some(Object::Str("Hello ".to_string())),
@@ -298,7 +317,7 @@ mod tests {
 
     #[test]
     fn t_arithmetic_error() {
-        let interpreter = Interpreter {};
+        let interpreter = Interpreter::new();
         let expr = BinaryExpr {
             left: Box::new(Expr::Literal(LiteralExpr {
                 value: Some(Object::Str("Hello ".to_string())),
@@ -313,7 +332,7 @@ mod tests {
 
     #[test]
     fn t_greaterequal() {
-        let interpreter = Interpreter {};
+        let interpreter = Interpreter::new();
         let expr = BinaryExpr {
             left: Box::new(Expr::Literal(LiteralExpr {
                 value: Some(Object::Num(16.0)),
@@ -331,7 +350,7 @@ mod tests {
 
     #[test]
     fn t_greater() {
-        let interpreter = Interpreter {};
+        let interpreter = Interpreter::new();
         let expr = BinaryExpr {
             left: Box::new(Expr::Literal(LiteralExpr {
                 value: Some(Object::Num(16.0)),
@@ -349,7 +368,7 @@ mod tests {
 
     #[test]
     fn t_lessequal() {
-        let interpreter = Interpreter {};
+        let interpreter = Interpreter::new();
         let expr = BinaryExpr {
             left: Box::new(Expr::Literal(LiteralExpr {
                 value: Some(Object::Num(6.0)),
@@ -367,7 +386,7 @@ mod tests {
 
     #[test]
     fn t_less() {
-        let interpreter = Interpreter {};
+        let interpreter = Interpreter::new();
         let expr = BinaryExpr {
             left: Box::new(Expr::Literal(LiteralExpr {
                 value: Some(Object::Num(16.0)),
@@ -382,7 +401,7 @@ mod tests {
 
     #[test]
     fn t_equals() {
-        let interpreter = Interpreter {};
+        let interpreter = Interpreter::new();
         let expr = BinaryExpr {
             left: Box::new(Expr::Literal(LiteralExpr {
                 value: Some(Object::Str("hello".to_string())),
@@ -400,7 +419,7 @@ mod tests {
 
     #[test]
     fn t_bangequals() {
-        let interpreter = Interpreter {};
+        let interpreter = Interpreter::new();
         let expr = BinaryExpr {
             left: Box::new(Expr::Literal(LiteralExpr {
                 value: Some(Object::Nil),

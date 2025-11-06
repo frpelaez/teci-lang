@@ -36,9 +36,9 @@ pub struct LetStmt {
 }
 
 pub trait StmtVisitor<T> {
-    fn visit_expression_stmt(&self, expr: &ExpressionStmt) -> Result<T, TeciError>;
-    fn visit_print_stmt(&self, expr: &PrintStmt) -> Result<T, TeciError>;
-    fn visit_let_stmt(&self, expr: &LetStmt) -> Result<T, TeciError>;
+    fn visit_expression_stmt(&self, stmt: &ExpressionStmt) -> Result<T, TeciError>;
+    fn visit_print_stmt(&self, stmt: &PrintStmt) -> Result<T, TeciError>;
+    fn visit_let_stmt(&self, stmt: &LetStmt) -> Result<T, TeciError>;
 }
 
 impl ExpressionStmt {

@@ -1,3 +1,4 @@
+mod envirnoment;
 mod error;
 mod expr;
 mod interpreter;
@@ -79,7 +80,7 @@ fn run(source: String) -> Result<(), TeciError> {
     //     println!("{}", printer.print(expr)?);
     // }
 
-    let interpreter = Interpreter {};
+    let interpreter = Interpreter::new();
     if let Ok(stmts) = statements {
         interpreter.interpret(&stmts);
     }

@@ -10,10 +10,10 @@ struct TreeType {
     fields: Vec<String>,
 }
 
-pub fn generate_ast(output_dir: &String) -> io::Result<()> {
+pub fn generate_ast(output_dir: &str) -> io::Result<()> {
     define_ast(
         output_dir,
-        &"Expr".to_string(),
+        "Expr",
         &["token", "object", "error"],
         &[
             "Binary     : Box<Expr> left, Token operator, Box<Expr> right",
@@ -26,7 +26,7 @@ pub fn generate_ast(output_dir: &String) -> io::Result<()> {
 
     define_ast(
         output_dir,
-        &"Stmt".to_string(),
+        "Stmt",
         &["error", "expr", "token"],
         &[
             "Expression : Expr expression",
@@ -37,8 +37,8 @@ pub fn generate_ast(output_dir: &String) -> io::Result<()> {
 }
 
 fn define_ast(
-    output_dir: &String,
-    base_name: &String,
+    output_dir: &str,
+    base_name: &str,
     imports: &[&str],
     types: &[&str],
 ) -> io::Result<()> {
@@ -109,8 +109,9 @@ fn define_ast(
     for t in &tree_types {
         writeln!(
             file,
-            "    fn visit_{}_{}(&self, expr: &{}) -> Result<T, TeciError>;",
+            "    fn visit_{}_{}(&self, {}: &{}) -> Result<T, TeciError>;",
             t.base_class_name.trim().to_lowercase(),
+            base_name.to_lowercase(),
             base_name.to_lowercase(),
             t.class_name
         )?;
