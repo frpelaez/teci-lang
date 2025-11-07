@@ -251,8 +251,8 @@ impl Parser {
             ) {
                 return;
             }
+            self.advance();
         }
-        self.advance();
     }
 
     fn is_match(&mut self, types: &[TokenType]) -> bool {

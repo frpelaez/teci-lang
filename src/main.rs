@@ -9,9 +9,8 @@ mod stmt;
 mod token;
 mod token_type;
 
-use interpreter::Interpreter;
-
 use crate::error::TeciError;
+use crate::interpreter::Interpreter;
 use crate::parser::Parser;
 use crate::scanner::Scanner;
 
