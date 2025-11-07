@@ -9,7 +9,7 @@ use crate::token::Token;
 use crate::token_type::TokenType;
 
 pub struct Interpreter {
-    enviroment: RefCell<Envirnoment>,
+    pub enviroment: RefCell<Envirnoment>,
 }
 
 impl Interpreter {
@@ -21,8 +21,7 @@ impl Interpreter {
 
     pub fn interpret(&self, statements: &Vec<Stmt>) -> Option<()> {
         for stmt in statements {
-            if self.execute(stmt).is_ok() {
-            } else {
+            if self.execute(stmt).is_err() {
                 return None;
             }
         }
