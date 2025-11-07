@@ -2,7 +2,7 @@ use crate::{
     error::TeciError,
     expr::{AssignExpr, BinaryExpr, Expr, GroupingExpr, LiteralExpr, UnaryExpr, VariableExpr},
     object::Object,
-    stmt::{ExpressionStmt, LetStmt, PrintStmt, Stmt},
+    stmt::{BlockStmt, ExpressionStmt, LetStmt, PrintStmt, Stmt},
     token::Token,
     token_type::TokenType,
 };
@@ -62,10 +62,14 @@ impl Parser {
 
     fn statement(&mut self) -> Result<Stmt, TeciError> {
         if self.is_match(&[TokenType::Print]) {
-            self.print_statement()
-        } else {
-            self.expr_statement()
+            return self.print_statement();
         }
+        if self.is_match(&[TokenType::LeftBrace]) {
+            return Ok(Stmt::Block(BlockStmt {
+                statements: self.block()?,
+            }));
+        }
+        self.expr_statement()
     }
 
     fn print_statement(&mut self) -> Result<Stmt, TeciError> {
@@ -78,6 +82,15 @@ impl Parser {
         let expr = self.expression()?;
         self.consume(TokenType::Semicolon, "Expected ';' after expression")?;
         Ok(Stmt::Expression(ExpressionStmt { expression: expr }))
+    }
+
+    fn block(&mut self) -> Result<Vec<Stmt>, TeciError> {
+        let mut stmts = Vec::new();
+        while !self.check(TokenType::RightBrace) && !self.is_at_end() {
+            stmts.push(self.declaration()?);
+        }
+        self.consume(TokenType::RightBrace, "Expected '}' after block")?;
+        Ok(stmts)
     }
 
     fn expression(&mut self) -> Result<Expr, TeciError> {
