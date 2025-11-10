@@ -16,7 +16,7 @@ pub struct Interpreter {
 impl Interpreter {
     pub fn new() -> Self {
         Self {
-            enviroment: RefCell::new(Rc::new(RefCell::new(Envirnoment::new()))),
+            enviroment: RefCell::new(Envirnoment::new()),
         }
     }
 
@@ -101,8 +101,9 @@ impl ExprVisitor<Object> for Interpreter {
         let value = self.evaluate(&expr.value)?;
         self.enviroment
             .borrow()
-            .borrow_mut()
-            .assign(&expr.name, value.clone())?;
+            .try_borrow_mut()
+            .unwrap()
+            .assign(&expr.name, value.clone());
         Ok(value)
     }
 
@@ -174,7 +175,11 @@ impl ExprVisitor<Object> for Interpreter {
     }
 
     fn visit_variable_expr(&self, expr: &VariableExpr) -> Result<Object, TeciError> {
-        self.enviroment.borrow().borrow().get(&expr.name)
+        self.enviroment
+            .borrow()
+            .try_borrow()
+            .unwrap()
+            .get(&expr.name)
     }
 }
 
@@ -198,7 +203,8 @@ impl StmtVisitor<()> for Interpreter {
         };
         self.enviroment
             .borrow()
-            .borrow_mut()
+            .try_borrow_mut()
+            .unwrap()
             .define(stmt.name.lexeme.clone(), value);
         Ok(())
     }

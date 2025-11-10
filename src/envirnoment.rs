@@ -13,11 +13,11 @@ pub struct Envirnoment {
 }
 
 impl Envirnoment {
-    pub fn new() -> Self {
-        Self {
+    pub fn new() -> Rc<RefCell<Envirnoment>> {
+        Rc::new(RefCell::new(Envirnoment {
             values: HashMap::new(),
             enclosing: None,
-        }
+        }))
     }
 
     pub fn with_enclosing(enclosing: Rc<RefCell<Envirnoment>>) -> Envirnoment {
@@ -66,40 +66,47 @@ mod tests {
 
     #[test]
     fn t_define_variable() {
-        let mut e = Envirnoment::new();
-        e.define("a".to_string(), Object::Bool(true));
-        assert!(e.values.contains_key("a"));
-        assert_eq!(e.values.get("a").unwrap(), &Object::Bool(true))
+        let e = Envirnoment::new();
+        e.borrow_mut().define("a".to_string(), Object::Bool(true));
+        assert!(e.borrow().values.contains_key("a"));
+        assert_eq!(e.borrow().values.get("a").unwrap(), &Object::Bool(true))
     }
 
     #[test]
     fn t_redefine_variable() {
-        let mut e = Envirnoment::new();
-        e.define("a".to_string(), Object::Bool(false));
-        e.define("a".to_string(), Object::Num(6.0));
-        assert_eq!(e.values.get("a").unwrap(), &Object::Num(6.0))
+        let e = Envirnoment::new();
+        e.borrow_mut().define("a".to_string(), Object::Bool(false));
+        e.borrow_mut().define("a".to_string(), Object::Num(6.0));
+        assert_eq!(e.borrow().values.get("a").unwrap(), &Object::Num(6.0))
     }
 
     #[test]
     fn t_lookup_variable() {
-        let mut e = Envirnoment::new();
-        e.define("a".to_string(), Object::Str("foo".to_string()));
+        let e = Envirnoment::new();
+        e.borrow_mut()
+            .define("a".to_string(), Object::Str("foo".to_string()));
         let tok = Token::new(TokenType::Identifier, "a".to_string(), None, 0);
         let tok_err = Token::new(TokenType::Identifier, "b".to_string(), None, 0);
-        assert_eq!(e.get(&tok).unwrap(), Object::Str("foo".to_string()));
-        assert!(e.get(&tok_err).is_err())
+        assert_eq!(
+            e.borrow().get(&tok).unwrap(),
+            Object::Str("foo".to_string())
+        );
+        assert!(e.borrow().get(&tok_err).is_err())
     }
 
     #[test]
     fn t_enclose_envirnoment() {
-        let e = Rc::new(RefCell::new(Envirnoment::new()));
+        let e = Envirnoment::new();
         let f = Envirnoment::with_enclosing(Rc::clone(&e));
-        assert_eq!(f.enclosing.unwrap().borrow().values, e.borrow().values)
+        assert_eq!(
+            e.borrow().values.clone(),
+            f.enclosing.unwrap().borrow().values
+        )
     }
 
     #[test]
     fn t_read_from_eclosing() {
-        let e = Rc::new(RefCell::new(Envirnoment::new()));
+        let e = Envirnoment::new();
         e.borrow_mut().define("a".to_string(), Object::Num(1.0));
         let f = Envirnoment::with_enclosing(Rc::clone(&e));
         assert_eq!(
@@ -111,7 +118,7 @@ mod tests {
 
     #[test]
     fn t_assign_to_enclosing() {
-        let e = Rc::new(RefCell::new(Envirnoment::new()));
+        let e = Envirnoment::new();
         e.borrow_mut().define("a".to_string(), Object::Num(1.0));
         let mut f = Envirnoment::with_enclosing(Rc::clone(&e));
         let tok = Token::new(TokenType::Identifier, "a".to_string(), None, 0);
