@@ -1,6 +1,6 @@
 use std::cell::RefCell;
 
-use crate::envirnoment::Envirnoment;
+use crate::envirnoment::Environment;
 use crate::error::TeciError;
 use crate::expr::*;
 use crate::object::Object;
@@ -9,24 +9,27 @@ use crate::token::Token;
 use crate::token_type::TokenType;
 
 pub struct Interpreter {
-    enviroment: RefCell<Envirnoment>,
+    environment: RefCell<Environment>,
 }
 
 impl Interpreter {
     pub fn new() -> Self {
         Self {
-            enviroment: RefCell::new(Envirnoment::new()),
+            environment: RefCell::new(Environment::new()),
         }
     }
 
-    pub fn interpret(&self, statements: &Vec<Stmt>) -> Option<()> {
+    pub fn dbg_environment(&self) {
+        println!("{:?}", &self.environment);
+    }
+
+    pub fn interpret(&self, statements: &Vec<Stmt>) -> bool {
         for stmt in statements {
-            if self.execute(stmt).is_ok() {
-            } else {
-                return None;
+            if self.execute(stmt).is_err() {
+                return false;
             }
         }
-        Some(())
+        true
     }
 
     fn execute(&self, statement: &Stmt) -> Result<(), TeciError> {
@@ -83,7 +86,7 @@ impl Interpreter {
 impl ExprVisitor<Object> for Interpreter {
     fn visit_assign_expr(&self, expr: &AssignExpr) -> Result<Object, TeciError> {
         let value = self.evaluate(&expr.value)?;
-        self.enviroment
+        self.environment
             .borrow_mut()
             .assign(&expr.name, value.clone())?;
         Ok(value)
@@ -133,18 +136,16 @@ impl ExprVisitor<Object> for Interpreter {
             _ => Object::ArithmeticError,
         };
 
-        if result == Object::ArithmeticError {
-            Err(TeciError::runtime_error(
+        match result {
+            Object::ArithmeticError => Err(TeciError::runtime_error(
                 expr.operator.clone(),
                 "Invalid operator",
-            ))
-        } else if result == Object::DivisionByZeroError {
-            Err(TeciError::runtime_error(
+            )),
+            Object::DivisionByZeroError => Err(TeciError::runtime_error(
                 expr.operator.clone(),
                 "Division by zero",
-            ))
-        } else {
-            Ok(result)
+            )),
+            _ => Ok(result),
         }
     }
 
@@ -157,7 +158,7 @@ impl ExprVisitor<Object> for Interpreter {
     }
 
     fn visit_variable_expr(&self, expr: &VariableExpr) -> Result<Object, TeciError> {
-        self.enviroment.borrow().get(&expr.name)
+        self.environment.borrow().get(&expr.name)
     }
 }
 
@@ -179,9 +180,9 @@ impl StmtVisitor<()> for Interpreter {
         } else {
             Object::Nil
         };
-        self.enviroment
+        self.environment
             .borrow_mut()
-            .define(stmt.name.lexeme.clone(), value);
+            .define(stmt.name.lexeme.as_str(), value);
         Ok(())
     }
 }

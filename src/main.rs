@@ -77,14 +77,23 @@ impl Teci {
     }
 
     fn run(&self, source: String) -> Result<(), TeciError> {
+        if source == "?" {
+            self.interpreter.dbg_environment();
+            return Ok(());
+        }
+
         let mut scanner = Scanner::new(source);
         let tokens = scanner.scan_tokens()?;
 
         let mut parser = Parser::new(tokens);
         let statements = parser.parse()?;
 
-        if parser.succeded() {
-            if let Some(()) = self.interpreter.interpret(&statements) {}
+        if !parser.succeded() {
+            println!("parser encountered an error");
+        }
+
+        if !self.interpreter.interpret(&statements) {
+            println!("interpreter encountered an error");
         }
 
         Ok(())
