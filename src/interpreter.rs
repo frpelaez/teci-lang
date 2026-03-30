@@ -168,6 +168,18 @@ impl ExprVisitor<Object> for Interpreter {
     fn visit_variable_expr(&self, expr: &VariableExpr) -> Result<Object, TeciError> {
         self.environment.borrow().borrow().get(&expr.name)
     }
+
+    fn visit_logical_expr(&self, expr: &LogicalExpr) -> Result<Object, TeciError> {
+        let left = self.evaluate(&expr.left)?;
+        if expr.operator.ttype == TokenType::Or {
+            if Interpreter::is_truthy(&left) {
+                return Ok(left);
+            }
+        } else if !Interpreter::is_truthy(&left) {
+            return Ok(left);
+        }
+        self.evaluate(&expr.right)
+    }
 }
 
 impl StmtVisitor<()> for Interpreter {

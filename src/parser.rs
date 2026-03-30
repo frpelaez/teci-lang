@@ -1,6 +1,9 @@
 use crate::{
     error::TeciError,
-    expr::{AssignExpr, BinaryExpr, Expr, GroupingExpr, LiteralExpr, UnaryExpr, VariableExpr},
+    expr::{
+        AssignExpr, BinaryExpr, Expr, GroupingExpr, LiteralExpr, LogicalExpr, UnaryExpr,
+        VariableExpr,
+    },
     object::Object,
     stmt::{BlockStmt, ExpressionStmt, IfStmt, LetStmt, PrintStmt, Stmt},
     token::Token,
@@ -125,7 +128,7 @@ impl Parser {
     }
 
     fn assignment(&mut self) -> Result<Expr, TeciError> {
-        let expr = self.equality()?;
+        let expr = self.or()?;
         if self.is_match(&[TokenType::Assign]) {
             let equals = self.previous();
             let value = self.assignment()?;
@@ -137,6 +140,34 @@ impl Parser {
                 }));
             }
             self.error(equals, "Invalid assignment target");
+        }
+        Ok(expr)
+    }
+
+    fn or(&mut self) -> Result<Expr, TeciError> {
+        let mut expr = self.and()?;
+        while self.is_match(&[TokenType::Or]) {
+            let operator = self.previous();
+            let right = self.and()?;
+            expr = Expr::Logical(LogicalExpr {
+                left: Box::new(expr),
+                operator,
+                right: Box::new(right),
+            });
+        }
+        Ok(expr)
+    }
+
+    fn and(&mut self) -> Result<Expr, TeciError> {
+        let mut expr = self.equality()?;
+        while self.is_match(&[TokenType::And]) {
+            let operator = self.previous();
+            let right = self.and()?;
+            expr = Expr::Logical(LogicalExpr {
+                left: Box::new(expr),
+                operator,
+                right: Box::new(right),
+            });
         }
         Ok(expr)
     }

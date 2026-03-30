@@ -7,6 +7,7 @@ pub enum Expr {
     Assign(AssignExpr),
     Binary(BinaryExpr),
     Grouping(GroupingExpr),
+    Logical(LogicalExpr),
     Literal(LiteralExpr),
     Unary(UnaryExpr),
     Variable(VariableExpr),
@@ -18,6 +19,7 @@ impl Expr {
             Expr::Assign(exp) => exp.accept(visitor),
             Expr::Binary(exp) => exp.accept(visitor),
             Expr::Grouping(exp) => exp.accept(visitor),
+            Expr::Logical(exp) => exp.accept(visitor),
             Expr::Literal(exp) => exp.accept(visitor),
             Expr::Unary(exp) => exp.accept(visitor),
             Expr::Variable(exp) => exp.accept(visitor),
@@ -44,6 +46,13 @@ pub struct GroupingExpr {
 }
 
 #[derive(Clone)]
+pub struct LogicalExpr {
+    pub left: Box<Expr>,
+    pub operator: Token,
+    pub right: Box<Expr>,
+}
+
+#[derive(Clone)]
 pub struct LiteralExpr {
     pub value: Option<Object>,
 }
@@ -63,6 +72,7 @@ pub trait ExprVisitor<T> {
     fn visit_assign_expr(&self, expr: &AssignExpr) -> Result<T, TeciError>;
     fn visit_binary_expr(&self, expr: &BinaryExpr) -> Result<T, TeciError>;
     fn visit_grouping_expr(&self, expr: &GroupingExpr) -> Result<T, TeciError>;
+    fn visit_logical_expr(&self, expr: &LogicalExpr) -> Result<T, TeciError>;
     fn visit_literal_expr(&self, expr: &LiteralExpr) -> Result<T, TeciError>;
     fn visit_unary_expr(&self, expr: &UnaryExpr) -> Result<T, TeciError>;
     fn visit_variable_expr(&self, expr: &VariableExpr) -> Result<T, TeciError>;
@@ -83,6 +93,12 @@ impl BinaryExpr {
 impl GroupingExpr {
     pub fn accept<T>(&self, visitor: &dyn ExprVisitor<T>) -> Result<T, TeciError> {
         visitor.visit_grouping_expr(self)
+    }
+}
+
+impl LogicalExpr {
+    pub fn accept<T>(&self, visitor: &dyn ExprVisitor<T>) -> Result<T, TeciError> {
+        visitor.visit_logical_expr(self)
     }
 }
 
