@@ -4,6 +4,7 @@ use crate::token::*;
 
 #[derive(Clone)]
 pub enum Stmt {
+    Block(BlockStmt),
     Expression(ExpressionStmt),
     Print(PrintStmt),
     Let(LetStmt),
@@ -12,11 +13,17 @@ pub enum Stmt {
 impl Stmt {
     pub fn accept<T>(&self, visitor: &dyn StmtVisitor<T>) -> Result<T, TeciError> {
         match self {
+            Stmt::Block(exp) => exp.accept(visitor),
             Stmt::Expression(exp) => exp.accept(visitor),
             Stmt::Print(exp) => exp.accept(visitor),
             Stmt::Let(exp) => exp.accept(visitor),
         }
     }
+}
+
+#[derive(Clone)]
+pub struct BlockStmt {
+    pub statements: Vec<Stmt>,
 }
 
 #[derive(Clone)]
@@ -36,9 +43,16 @@ pub struct LetStmt {
 }
 
 pub trait StmtVisitor<T> {
+    fn visit_block_stmt(&self, stmt: &BlockStmt) -> Result<T, TeciError>;
     fn visit_expression_stmt(&self, stmt: &ExpressionStmt) -> Result<T, TeciError>;
     fn visit_print_stmt(&self, stmt: &PrintStmt) -> Result<T, TeciError>;
     fn visit_let_stmt(&self, stmt: &LetStmt) -> Result<T, TeciError>;
+}
+
+impl BlockStmt {
+    pub fn accept<T>(&self, visitor: &dyn StmtVisitor<T>) -> Result<T, TeciError> {
+        visitor.visit_block_stmt(self)
+    }
 }
 
 impl ExpressionStmt {

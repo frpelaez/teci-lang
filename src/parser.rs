@@ -2,7 +2,7 @@ use crate::{
     error::TeciError,
     expr::{AssignExpr, BinaryExpr, Expr, GroupingExpr, LiteralExpr, UnaryExpr, VariableExpr},
     object::Object,
-    stmt::{ExpressionStmt, LetStmt, PrintStmt, Stmt},
+    stmt::{BlockStmt, ExpressionStmt, LetStmt, PrintStmt, Stmt},
     token::Token,
     token_type::TokenType,
 };
@@ -63,6 +63,11 @@ impl Parser {
     fn statement(&mut self) -> Result<Stmt, TeciError> {
         if self.is_match(&[TokenType::Print]) {
             self.print_statement()
+        } else if self.is_match(&[TokenType::LeftBrace]) {
+            // I do this in order to be able to reuse the self.block() for other block parsing in the future
+            Ok(Stmt::Block(BlockStmt {
+                statements: self.block()?,
+            }))
         } else {
             self.expr_statement()
         }
@@ -78,6 +83,15 @@ impl Parser {
         let expr = self.expression()?;
         self.consume(TokenType::Semicolon, "Expected ';' after expression")?;
         Ok(Stmt::Expression(ExpressionStmt { expression: expr }))
+    }
+
+    fn block(&mut self) -> Result<Vec<Stmt>, TeciError> {
+        let mut statements = Vec::new();
+        while !self.check(TokenType::RightBrace) && !self.is_at_end() {
+            statements.push(self.declaration()?);
+        }
+        self.consume(TokenType::RightBrace, "Expected '}' after declarations")?;
+        Ok(statements)
     }
 
     fn expression(&mut self) -> Result<Expr, TeciError> {

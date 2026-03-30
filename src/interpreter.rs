@@ -1,21 +1,22 @@
 use std::cell::RefCell;
+use std::rc::Rc;
 
 use crate::envirnoment::Environment;
 use crate::error::TeciError;
 use crate::expr::*;
 use crate::object::Object;
-use crate::stmt::{ExpressionStmt, LetStmt, PrintStmt, Stmt, StmtVisitor};
+use crate::stmt::{BlockStmt, ExpressionStmt, LetStmt, PrintStmt, Stmt, StmtVisitor};
 use crate::token::Token;
 use crate::token_type::TokenType;
 
 pub struct Interpreter {
-    environment: RefCell<Environment>,
+    environment: RefCell<Rc<RefCell<Environment>>>,
 }
 
 impl Interpreter {
     pub fn new() -> Self {
         Self {
-            environment: RefCell::new(Environment::new()),
+            environment: RefCell::new(Rc::new(RefCell::new(Environment::new()))),
         }
     }
 
@@ -23,17 +24,23 @@ impl Interpreter {
         println!("{:?}", &self.environment);
     }
 
-    pub fn interpret(&self, statements: &Vec<Stmt>) -> bool {
-        for stmt in statements {
-            if self.execute(stmt).is_err() {
-                return false;
-            }
-        }
-        true
+    pub fn interpret(&self, statements: &[Stmt]) -> bool {
+        statements.iter().try_for_each(|s| self.execute(s)).is_ok()
     }
 
     fn execute(&self, statement: &Stmt) -> Result<(), TeciError> {
         statement.accept(self)
+    }
+
+    fn execute_block(
+        &self,
+        statements: &[Stmt],
+        environment: Environment,
+    ) -> Result<(), TeciError> {
+        let previous = self.environment.replace(Rc::new(RefCell::new(environment)));
+        let result = statements.iter().try_for_each(|s| self.execute(s));
+        self.environment.replace(previous);
+        result
     }
 
     fn evaluate(&self, expr: &Expr) -> Result<Object, TeciError> {
@@ -87,6 +94,7 @@ impl ExprVisitor<Object> for Interpreter {
     fn visit_assign_expr(&self, expr: &AssignExpr) -> Result<Object, TeciError> {
         let value = self.evaluate(&expr.value)?;
         self.environment
+            .borrow()
             .borrow_mut()
             .assign(&expr.name, value.clone())?;
         Ok(value)
@@ -158,7 +166,7 @@ impl ExprVisitor<Object> for Interpreter {
     }
 
     fn visit_variable_expr(&self, expr: &VariableExpr) -> Result<Object, TeciError> {
-        self.environment.borrow().get(&expr.name)
+        self.environment.borrow().borrow().get(&expr.name)
     }
 }
 
@@ -181,9 +189,15 @@ impl StmtVisitor<()> for Interpreter {
             Object::Nil
         };
         self.environment
+            .borrow()
             .borrow_mut()
             .define(stmt.name.lexeme.as_str(), value);
         Ok(())
+    }
+
+    fn visit_block_stmt(&self, stmt: &BlockStmt) -> Result<(), TeciError> {
+        let e = Environment::with_environment(self.environment.borrow().clone());
+        self.execute_block(&stmt.statements, e)
     }
 }
 
