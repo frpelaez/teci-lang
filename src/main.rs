@@ -77,10 +77,6 @@ impl Teci {
     }
 
     fn run(&self, source: String) -> Result<(), TeciError> {
-        if source == "#" {
-            println!("{:?}", self.interpreter.enviroment);
-            return Ok(());
-        }
         let mut scanner = Scanner::new(source);
         let tokens = scanner.scan_tokens()?;
 
@@ -88,7 +84,7 @@ impl Teci {
         let statements = parser.parse()?;
 
         if parser.succeded() {
-            self.interpreter.interpret(&statements);
+            if let Some(()) = self.interpreter.interpret(&statements) {}
         }
 
         Ok(())
