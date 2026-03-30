@@ -5,6 +5,7 @@ use crate::token::*;
 #[derive(Clone)]
 pub enum Stmt {
     Block(BlockStmt),
+    If(IfStmt),
     Expression(ExpressionStmt),
     Print(PrintStmt),
     Let(LetStmt),
@@ -14,6 +15,7 @@ impl Stmt {
     pub fn accept<T>(&self, visitor: &dyn StmtVisitor<T>) -> Result<T, TeciError> {
         match self {
             Stmt::Block(exp) => exp.accept(visitor),
+            Stmt::If(exp) => exp.accept(visitor),
             Stmt::Expression(exp) => exp.accept(visitor),
             Stmt::Print(exp) => exp.accept(visitor),
             Stmt::Let(exp) => exp.accept(visitor),
@@ -24,6 +26,13 @@ impl Stmt {
 #[derive(Clone)]
 pub struct BlockStmt {
     pub statements: Vec<Stmt>,
+}
+
+#[derive(Clone)]
+pub struct IfStmt {
+    pub condition: Expr,
+    pub then_branch: Box<Stmt>,
+    pub else_branch: Option<Box<Stmt>>,
 }
 
 #[derive(Clone)]
@@ -44,6 +53,7 @@ pub struct LetStmt {
 
 pub trait StmtVisitor<T> {
     fn visit_block_stmt(&self, stmt: &BlockStmt) -> Result<T, TeciError>;
+    fn visit_if_stmt(&self, stmt: &IfStmt) -> Result<T, TeciError>;
     fn visit_expression_stmt(&self, stmt: &ExpressionStmt) -> Result<T, TeciError>;
     fn visit_print_stmt(&self, stmt: &PrintStmt) -> Result<T, TeciError>;
     fn visit_let_stmt(&self, stmt: &LetStmt) -> Result<T, TeciError>;
@@ -52,6 +62,12 @@ pub trait StmtVisitor<T> {
 impl BlockStmt {
     pub fn accept<T>(&self, visitor: &dyn StmtVisitor<T>) -> Result<T, TeciError> {
         visitor.visit_block_stmt(self)
+    }
+}
+
+impl IfStmt {
+    pub fn accept<T>(&self, visitor: &dyn StmtVisitor<T>) -> Result<T, TeciError> {
+        visitor.visit_if_stmt(self)
     }
 }
 

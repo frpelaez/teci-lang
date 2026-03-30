@@ -5,7 +5,7 @@ use crate::envirnoment::Environment;
 use crate::error::TeciError;
 use crate::expr::*;
 use crate::object::Object;
-use crate::stmt::{BlockStmt, ExpressionStmt, LetStmt, PrintStmt, Stmt, StmtVisitor};
+use crate::stmt::{BlockStmt, ExpressionStmt, IfStmt, LetStmt, PrintStmt, Stmt, StmtVisitor};
 use crate::token::Token;
 use crate::token_type::TokenType;
 
@@ -178,7 +178,8 @@ impl StmtVisitor<()> for Interpreter {
     }
 
     fn visit_expression_stmt(&self, stmt: &ExpressionStmt) -> Result<(), TeciError> {
-        self.evaluate(&stmt.expression)?;
+        let val = self.evaluate(&stmt.expression)?;
+        println!("{}", val);
         Ok(())
     }
 
@@ -198,6 +199,16 @@ impl StmtVisitor<()> for Interpreter {
     fn visit_block_stmt(&self, stmt: &BlockStmt) -> Result<(), TeciError> {
         let e = Environment::with_environment(self.environment.borrow().clone());
         self.execute_block(&stmt.statements, e)
+    }
+
+    fn visit_if_stmt(&self, stmt: &IfStmt) -> Result<(), TeciError> {
+        if Interpreter::is_truthy(&self.evaluate(&stmt.condition)?) {
+            self.execute(&stmt.then_branch)
+        } else if let Some(else_branch) = &stmt.else_branch {
+            self.execute(else_branch)
+        } else {
+            Ok(())
+        }
     }
 }
 

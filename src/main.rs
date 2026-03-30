@@ -17,6 +17,7 @@ use crate::scanner::Scanner;
 use std::{
     env::args,
     io::{self, Write, stdout},
+    path::Path,
 };
 
 fn main() {
@@ -45,7 +46,7 @@ impl Teci {
         }
     }
 
-    fn run_script(&self, path: &String) -> io::Result<()> {
+    fn run_script<S: AsRef<Path>>(&self, path: S) -> io::Result<()> {
         let buf = std::fs::read_to_string(path)?;
         if self.run(buf).is_err() {
             std::process::exit(65);

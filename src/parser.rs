@@ -2,7 +2,7 @@ use crate::{
     error::TeciError,
     expr::{AssignExpr, BinaryExpr, Expr, GroupingExpr, LiteralExpr, UnaryExpr, VariableExpr},
     object::Object,
-    stmt::{BlockStmt, ExpressionStmt, LetStmt, PrintStmt, Stmt},
+    stmt::{BlockStmt, ExpressionStmt, IfStmt, LetStmt, PrintStmt, Stmt},
     token::Token,
     token_type::TokenType,
 };
@@ -61,7 +61,9 @@ impl Parser {
     }
 
     fn statement(&mut self) -> Result<Stmt, TeciError> {
-        if self.is_match(&[TokenType::Print]) {
+        if self.is_match(&[TokenType::If]) {
+            self.if_statement()
+        } else if self.is_match(&[TokenType::Print]) {
             self.print_statement()
         } else if self.is_match(&[TokenType::LeftBrace]) {
             // I do this in order to be able to reuse the self.block() for other block parsing in the future
@@ -92,6 +94,23 @@ impl Parser {
         }
         self.consume(TokenType::RightBrace, "Expected '}' after declarations")?;
         Ok(statements)
+    }
+
+    fn if_statement(&mut self) -> Result<Stmt, TeciError> {
+        self.consume(TokenType::LeftParen, "Expected '(' after 'if'")?;
+        let condition = self.expression()?;
+        self.consume(TokenType::RightParen, "Expected ')' after if condition")?;
+        let then_branch = Box::new(self.statement()?);
+        let else_branch = if self.is_match(&[TokenType::Else]) {
+            Some(Box::new(self.statement()?))
+        } else {
+            None
+        };
+        Ok(Stmt::If(IfStmt {
+            condition,
+            then_branch,
+            else_branch,
+        }))
     }
 
     fn expression(&mut self) -> Result<Expr, TeciError> {
