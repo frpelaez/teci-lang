@@ -1,14 +1,17 @@
 use std::{
     cmp::Ordering,
-    fmt,
+    fmt::{self, Debug},
     ops::{Add, Div, Mul, Neg, Sub},
 };
+
+use crate::callable::Callable;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Object {
     Num(f64),
     Str(String),
     Bool(bool),
+    Func(Callable),
     Nil,
     ArithmeticError,
     DivisionByZeroError,
@@ -23,6 +26,7 @@ impl fmt::Display for Object {
             Self::Nil => write!(f, "nil"),
             Self::ArithmeticError => write!(f, "ArithmeticError"),
             Self::DivisionByZeroError => write!(f, "DivisionByZeroError"),
+            Self::Func(_) => todo!(),
         }
     }
 }

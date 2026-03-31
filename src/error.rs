@@ -5,6 +5,7 @@ pub enum TeciResult {
     ParseError { token: Token, message: String },
     RuntimeError { token: Token, message: String },
     TeciError { line: usize, message: String },
+    SystemError { message: String },
     Break,
 }
 
@@ -36,6 +37,14 @@ impl TeciResult {
         error
     }
 
+    pub fn system_error(message: &str) -> TeciResult {
+        let error = TeciResult::SystemError {
+            message: message.to_string(),
+        };
+        error.report("");
+        error
+    }
+
     pub fn report(&self, loc: &str) {
         match self {
             TeciResult::ParseError { token, message } => {
@@ -60,6 +69,9 @@ impl TeciResult {
             }
             TeciResult::TeciError { line, message } => {
                 eprintln!("[Error {}] In line {} : {}", loc, line, message)
+            }
+            TeciResult::SystemError { message } => {
+                eprintln!("[System Error] {}", message)
             }
             TeciResult::Break => {}
         }

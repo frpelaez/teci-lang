@@ -1,7 +1,7 @@
 use crate::{
     error::TeciResult,
     expr::{
-        AssignExpr, BinaryExpr, Expr, GroupingExpr, LiteralExpr, LogicalExpr, UnaryExpr,
+        AssignExpr, BinaryExpr, CallExpr, Expr, GroupingExpr, LiteralExpr, LogicalExpr, UnaryExpr,
         VariableExpr,
     },
     object::Object,
@@ -340,8 +340,50 @@ impl Parser {
                 right: Box::new(right),
             }))
         } else {
-            Ok(self.primary()?)
+            self.call()
         }
+    }
+
+    fn call(&mut self) -> Result<Expr, TeciResult> {
+        let mut expr = self.primary()?;
+        loop {
+            if self.is_match(&[TokenType::LeftParen]) {
+                expr = self.finish_call(&expr)?;
+            } else {
+                break;
+            }
+        }
+
+        Ok(expr)
+    }
+
+    fn finish_call(&mut self, callee: &Expr) -> Result<Expr, TeciResult> {
+        let mut arguments = Vec::new();
+
+        if !self.check(TokenType::RightParen) {
+            loop {
+                if arguments.len() == 255 {
+                    let err = TeciResult::runtime_error(
+                        self.peek(),
+                        "Function calls cannot accept more than 255 arguments",
+                    );
+                    err.report("");
+                } else {
+                    arguments.push(self.expression()?);
+                }
+
+                if !self.is_match(&[TokenType::Comma]) {
+                    break;
+                }
+            }
+        }
+        let paren = self.consume(TokenType::RightParen, "Expected ')' after arguments")?;
+
+        Ok(Expr::Call(CallExpr {
+            callee: Box::new(callee.clone()),
+            paren,
+            arguments,
+        }))
     }
 
     fn primary(&mut self) -> Result<Expr, TeciResult> {

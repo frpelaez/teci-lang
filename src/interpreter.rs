@@ -1,23 +1,38 @@
 use std::cell::RefCell;
 use std::rc::Rc;
 
-use crate::envirnoment::Environment;
-use crate::error::TeciResult;
-use crate::expr::*;
-use crate::object::Object;
-use crate::stmt::*;
-use crate::token::Token;
-use crate::token_type::TokenType;
+use crate::{
+    callable::{Callable, TeciCallable},
+    envirnoment::Environment,
+    error::TeciResult,
+    expr::*,
+    native_functions::*,
+    object::Object,
+    stmt::*,
+    token::Token,
+    token_type::TokenType,
+};
 
 pub struct Interpreter {
+    globals: Rc<RefCell<Environment>>,
     environment: RefCell<Rc<RefCell<Environment>>>,
     nesting_level: RefCell<usize>,
 }
 
 impl Interpreter {
     pub fn new() -> Self {
+        let globals = Rc::new(RefCell::new(Environment::new()));
+
+        globals.borrow_mut().define(
+            "clock",
+            Object::Func(Callable {
+                func: Rc::new(NativeClock),
+            }),
+        );
+
         Self {
-            environment: RefCell::new(Rc::new(RefCell::new(Environment::new()))),
+            globals: Rc::clone(&globals),
+            environment: RefCell::new(Rc::clone(&globals)),
             nesting_level: RefCell::new(0),
         }
     }
@@ -61,6 +76,7 @@ impl Interpreter {
             Object::Nil => false,
             Object::ArithmeticError => false,
             Object::DivisionByZeroError => false,
+            Object::Func(_) => false,
         }
     }
 
@@ -92,6 +108,7 @@ impl Interpreter {
             Object::Nil => "nil".to_string(),
             Object::ArithmeticError => "arithmetic_error!!!".to_string(),
             Object::DivisionByZeroError => "division_by_zero_error!!!".to_string(),
+            Object::Func(_) => "func!!!".to_string(),
         }
     }
 }
@@ -188,6 +205,35 @@ impl ExprVisitor<Object> for Interpreter {
             return Ok(left);
         }
         self.evaluate(&expr.right)
+    }
+
+    fn visit_call_expr(&self, expr: &CallExpr) -> Result<Object, TeciResult> {
+        let callee = self.evaluate(&expr.callee)?;
+
+        let mut arguments = Vec::new();
+        for arg in &expr.arguments {
+            arguments.push(self.evaluate(arg)?);
+        }
+
+        if let Object::Func(function) = callee {
+            if function.arity() != arguments.len() {
+                Err(TeciResult::runtime_error(
+                    expr.paren.clone(),
+                    &format!(
+                        "Expected {} arguments but found {} instead",
+                        function.arity(),
+                        arguments.len()
+                    ),
+                ))
+            } else {
+                function.call(self, arguments)
+            }
+        } else {
+            Err(TeciResult::runtime_error(
+                expr.paren.clone(),
+                "Only callable objects are functions and classes",
+            ))
+        }
     }
 }
 

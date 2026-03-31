@@ -18,6 +18,7 @@ pub fn generate_ast(output_dir: &str) -> io::Result<()> {
         &[
             "Assign     : Token name, Box<Expr> value",
             "Binary     : Box<Expr> left, Token operator, Box<Expr> right",
+            "Call       : Box<Expr> callee, Token paren, Vec<Expr> arguments",
             "Grouping   : Box<Expr> expression",
             "Logical    : Box<Expr> left, Token operator, Box<Expr> right",
             "Literal    : Option<Object> value",

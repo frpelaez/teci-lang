@@ -6,6 +6,7 @@ use crate::error::*;
 pub enum Expr {
     Assign(AssignExpr),
     Binary(BinaryExpr),
+    Call(CallExpr),
     Grouping(GroupingExpr),
     Logical(LogicalExpr),
     Literal(LiteralExpr),
@@ -18,6 +19,7 @@ impl Expr {
         match self {
             Expr::Assign(exp) => exp.accept(visitor),
             Expr::Binary(exp) => exp.accept(visitor),
+            Expr::Call(exp) => exp.accept(visitor),
             Expr::Grouping(exp) => exp.accept(visitor),
             Expr::Logical(exp) => exp.accept(visitor),
             Expr::Literal(exp) => exp.accept(visitor),
@@ -38,6 +40,13 @@ pub struct BinaryExpr {
     pub left: Box<Expr>,
     pub operator: Token,
     pub right: Box<Expr>,
+}
+
+#[derive(Clone)]
+pub struct CallExpr {
+    pub callee: Box<Expr>,
+    pub paren: Token,
+    pub arguments: Vec<Expr>,
 }
 
 #[derive(Clone)]
@@ -71,6 +80,7 @@ pub struct VariableExpr {
 pub trait ExprVisitor<T> {
     fn visit_assign_expr(&self, expr: &AssignExpr) -> Result<T, TeciResult>;
     fn visit_binary_expr(&self, expr: &BinaryExpr) -> Result<T, TeciResult>;
+    fn visit_call_expr(&self, expr: &CallExpr) -> Result<T, TeciResult>;
     fn visit_grouping_expr(&self, expr: &GroupingExpr) -> Result<T, TeciResult>;
     fn visit_logical_expr(&self, expr: &LogicalExpr) -> Result<T, TeciResult>;
     fn visit_literal_expr(&self, expr: &LiteralExpr) -> Result<T, TeciResult>;
@@ -87,6 +97,12 @@ impl AssignExpr {
 impl BinaryExpr {
     pub fn accept<T>(&self, visitor: &dyn ExprVisitor<T>) -> Result<T, TeciResult> {
         visitor.visit_binary_expr(self)
+    }
+}
+
+impl CallExpr {
+    pub fn accept<T>(&self, visitor: &dyn ExprVisitor<T>) -> Result<T, TeciResult> {
+        visitor.visit_call_expr(self)
     }
 }
 

@@ -1,7 +1,9 @@
+mod callable;
 mod envirnoment;
 mod error;
 mod expr;
 mod interpreter;
+mod native_functions;
 mod object;
 mod parser;
 mod scanner;
@@ -9,10 +11,7 @@ mod stmt;
 mod token;
 mod token_type;
 
-use crate::error::TeciResult;
-use crate::interpreter::Interpreter;
-use crate::parser::Parser;
-use crate::scanner::Scanner;
+use crate::{error::TeciResult, interpreter::Interpreter, parser::Parser, scanner::Scanner};
 
 use std::{
     env::args,
@@ -89,13 +88,9 @@ impl Teci {
         let mut parser = Parser::new(tokens);
         let statements = parser.parse()?;
 
-        if !parser.succeded() {
-            println!("parser encountered an error");
-        }
+        parser.succeded();
 
-        if !self.interpreter.interpret(&statements) {
-            println!("interpreter encountered an error");
-        }
+        self.interpreter.interpret(&statements);
 
         Ok(())
     }
