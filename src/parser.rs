@@ -5,7 +5,7 @@ use crate::{
         VariableExpr,
     },
     object::Object,
-    stmt::{BlockStmt, ExpressionStmt, IfStmt, LetStmt, PrintStmt, Stmt},
+    stmt::{BlockStmt, ExpressionStmt, IfStmt, LetStmt, PrintStmt, Stmt, WhileStmt},
     token::Token,
     token_type::TokenType,
 };
@@ -68,6 +68,8 @@ impl Parser {
             self.if_statement()
         } else if self.is_match(&[TokenType::Print]) {
             self.print_statement()
+        } else if self.is_match(&[TokenType::While]) {
+            self.while_statement()
         } else if self.is_match(&[TokenType::LeftBrace]) {
             // I do this in order to be able to reuse the self.block() for other block parsing in the future
             Ok(Stmt::Block(BlockStmt {
@@ -114,6 +116,14 @@ impl Parser {
             then_branch,
             else_branch,
         }))
+    }
+
+    fn while_statement(&mut self) -> Result<Stmt, TeciError> {
+        self.consume(TokenType::LeftParen, "Expected '(' after 'while'")?;
+        let condition = self.expression()?;
+        self.consume(TokenType::RightParen, "Expected ')' after while condition")?;
+        let body = Box::new(self.statement()?);
+        Ok(Stmt::While(WhileStmt { condition, body }))
     }
 
     fn expression(&mut self) -> Result<Expr, TeciError> {

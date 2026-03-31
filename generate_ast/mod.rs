@@ -36,6 +36,7 @@ pub fn generate_ast(output_dir: &str) -> io::Result<()> {
             "Expression : Expr expression",
             "Print      : Expr expression",
             "Let        : Token name, Option<Expr> initializer",
+            "While      : Expr condition, Box<Stmt> body",
         ],
     )
 }

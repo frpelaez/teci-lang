@@ -5,7 +5,9 @@ use crate::envirnoment::Environment;
 use crate::error::TeciError;
 use crate::expr::*;
 use crate::object::Object;
-use crate::stmt::{BlockStmt, ExpressionStmt, IfStmt, LetStmt, PrintStmt, Stmt, StmtVisitor};
+use crate::stmt::{
+    BlockStmt, ExpressionStmt, IfStmt, LetStmt, PrintStmt, Stmt, StmtVisitor, WhileStmt,
+};
 use crate::token::Token;
 use crate::token_type::TokenType;
 
@@ -190,8 +192,8 @@ impl StmtVisitor<()> for Interpreter {
     }
 
     fn visit_expression_stmt(&self, stmt: &ExpressionStmt) -> Result<(), TeciError> {
-        let val = self.evaluate(&stmt.expression)?;
-        println!("{}", val);
+        let _val = self.evaluate(&stmt.expression)?;
+        // println!("{}", val);
         Ok(())
     }
 
@@ -221,6 +223,13 @@ impl StmtVisitor<()> for Interpreter {
         } else {
             Ok(())
         }
+    }
+
+    fn visit_while_stmt(&self, stmt: &WhileStmt) -> Result<(), TeciError> {
+        while Interpreter::is_truthy(&self.evaluate(&stmt.condition)?) {
+            self.execute(&stmt.body)?;
+        }
+        Ok(())
     }
 }
 

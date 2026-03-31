@@ -60,7 +60,7 @@ impl Teci {
         let _ = stdout().flush();
         for line in stdin.lines() {
             if let Ok(line) = line {
-                if line.is_empty() {
+                if line == "exit" || line == "quit" {
                     break;
                 }
                 match self.run(line) {
