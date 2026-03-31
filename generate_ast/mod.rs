@@ -31,6 +31,7 @@ pub fn generate_ast(output_dir: &str) -> io::Result<()> {
         "Stmt",
         &["error", "expr", "token"],
         &[
+            "Break      : Option<()> _a",
             "Block      : Vec<Stmt> statements",
             "If         : Expr condition, Box<Stmt> then_branch, Option<Box<Stmt>> else_branch",
             "Expression : Expr expression",
@@ -86,7 +87,7 @@ fn define_ast(
     writeln!(file, "\nimpl {} {{", base_name)?;
     writeln!(
         file,
-        "    pub fn accept<T>(&self, visitor: &dyn {}Visitor<T>) -> Result<T, TeciError> {{",
+        "    pub fn accept<T>(&self, visitor: &dyn {}Visitor<T>) -> Result<T, TeciResult> {{",
         base_name
     )?;
     writeln!(file, "        match self {{")?;
@@ -114,7 +115,7 @@ fn define_ast(
     for t in &tree_types {
         writeln!(
             file,
-            "    fn visit_{}_{}(&self, {}: &{}) -> Result<T, TeciError>;",
+            "    fn visit_{}_{}(&self, {}: &{}) -> Result<T, TeciResult>;",
             t.base_class_name.trim().to_lowercase(),
             base_name.to_lowercase(),
             base_name.to_lowercase(),
@@ -127,7 +128,7 @@ fn define_ast(
         writeln!(file, "\nimpl {} {{", t.class_name)?;
         writeln!(
             file,
-            "    pub fn accept<T>(&self, visitor: &dyn {}Visitor<T>) -> Result<T, TeciError> {{",
+            "    pub fn accept<T>(&self, visitor: &dyn {}Visitor<T>) -> Result<T, TeciResult> {{",
             base_name,
         )?;
         writeln!(

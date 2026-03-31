@@ -43,6 +43,7 @@ pub enum TokenType {
     Super,
     Print,
     Nil,
+    Break,
     // EOF
     Eof,
 }

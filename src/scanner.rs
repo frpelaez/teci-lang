@@ -1,4 +1,4 @@
-use crate::{error::TeciError, object::Object, token::Token, token_type::TokenType};
+use crate::{error::TeciResult, object::Object, token::Token, token_type::TokenType};
 
 #[allow(dead_code)]
 #[derive(Debug)]
@@ -21,8 +21,8 @@ impl Scanner {
         }
     }
 
-    pub fn scan_tokens(&mut self) -> Result<Vec<Token>, TeciError> {
-        let mut had_error: Option<TeciError> = None;
+    pub fn scan_tokens(&mut self) -> Result<Vec<Token>, TeciResult> {
+        let mut had_error: Option<TeciResult> = None;
         while !self.is_at_end() {
             self.start = self.current;
             if let Err(e) = self.scan_token() {
@@ -41,7 +41,7 @@ impl Scanner {
         }
     }
 
-    fn scan_token(&mut self) -> Result<(), TeciError> {
+    fn scan_token(&mut self) -> Result<(), TeciResult> {
         let c = self.advance();
         match c {
             '(' => self.add_token(TokenType::LeftParen),
@@ -114,7 +114,7 @@ impl Scanner {
                     self.read_identifier()?;
                 }
             } // _ => {
-              //     return Err(TeciError::new(
+              //     return Err(TeciResult::new(
               //         self.line,
               //         "Unexpected character.".to_string(),
               //     ));
@@ -123,7 +123,7 @@ impl Scanner {
         Ok(())
     }
 
-    fn read_identifier(&mut self) -> Result<(), TeciError> {
+    fn read_identifier(&mut self) -> Result<(), TeciResult> {
         while Scanner::is_alphanumeric(self.peek()) {
             self.advance();
         }
@@ -143,7 +143,7 @@ impl Scanner {
         Ok(())
     }
 
-    fn read_string(&mut self) -> Result<(), TeciError> {
+    fn read_string(&mut self) -> Result<(), TeciResult> {
         while let Some(ch) = self.peek() {
             match ch {
                 '"' => break,
@@ -156,7 +156,7 @@ impl Scanner {
         }
 
         if self.is_at_end() {
-            return Err(TeciError::new(self.line, "Unterminated string."));
+            return Err(TeciResult::teci_error(self.line, "Unterminated string."));
         }
 
         self.advance();
@@ -174,7 +174,7 @@ impl Scanner {
         Ok(())
     }
 
-    fn read_comment(&mut self) -> Result<(), TeciError> {
+    fn read_comment(&mut self) -> Result<(), TeciResult> {
         loop {
             match self.peek() {
                 Some('*') => {
@@ -194,7 +194,7 @@ impl Scanner {
                     self.line += 1;
                 }
                 None => {
-                    return Err(TeciError::new(self.line, "Unterminated comment."));
+                    return Err(TeciResult::teci_error(self.line, "Unterminated comment."));
                 }
                 _ => {
                     self.advance();
@@ -285,6 +285,7 @@ impl Scanner {
     fn keyword(check: &str) -> Option<TokenType> {
         match check {
             "and" => Some(TokenType::And),
+            "break" => Some(TokenType::Break),
             "class" => Some(TokenType::Class),
             "else" => Some(TokenType::Else),
             "false" => Some(TokenType::False),

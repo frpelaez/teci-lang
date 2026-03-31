@@ -26,15 +26,14 @@ impl fmt::Display for Token {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
-            "{:?} {} {} {}",
+            "{:?}::{} {}",
             self.ttype,
             self.lexeme,
             if let Some(literal) = &self.literal {
                 literal.to_string()
             } else {
-                "None".to_string()
+                "".to_string()
             },
-            self.line
         )
     }
 }

@@ -9,7 +9,7 @@ mod stmt;
 mod token;
 mod token_type;
 
-use crate::error::TeciError;
+use crate::error::TeciResult;
 use crate::interpreter::Interpreter;
 use crate::parser::Parser;
 use crate::scanner::Scanner;
@@ -77,7 +77,7 @@ impl Teci {
         }
     }
 
-    fn run(&self, source: String) -> Result<(), TeciError> {
+    fn run(&self, source: String) -> Result<(), TeciResult> {
         if source == "?" {
             self.interpreter.dbg_environment();
             return Ok(());

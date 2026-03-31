@@ -2,12 +2,10 @@ use std::cell::RefCell;
 use std::rc::Rc;
 
 use crate::envirnoment::Environment;
-use crate::error::TeciError;
+use crate::error::TeciResult;
 use crate::expr::*;
 use crate::object::Object;
-use crate::stmt::{
-    BlockStmt, ExpressionStmt, IfStmt, LetStmt, PrintStmt, Stmt, StmtVisitor, WhileStmt,
-};
+use crate::stmt::*;
 use crate::token::Token;
 use crate::token_type::TokenType;
 
@@ -30,7 +28,7 @@ impl Interpreter {
         statements.iter().try_for_each(|s| self.execute(s)).is_ok()
     }
 
-    fn execute(&self, statement: &Stmt) -> Result<(), TeciError> {
+    fn execute(&self, statement: &Stmt) -> Result<(), TeciResult> {
         statement.accept(self)
     }
 
@@ -38,14 +36,14 @@ impl Interpreter {
         &self,
         statements: &[Stmt],
         environment: Environment,
-    ) -> Result<(), TeciError> {
+    ) -> Result<(), TeciResult> {
         let previous = self.environment.replace(Rc::new(RefCell::new(environment)));
         let result = statements.iter().try_for_each(|s| self.execute(s));
         self.environment.replace(previous);
         result
     }
 
-    fn evaluate(&self, expr: &Expr) -> Result<Object, TeciError> {
+    fn evaluate(&self, expr: &Expr) -> Result<Object, TeciResult> {
         expr.accept(self)
     }
 
@@ -64,10 +62,10 @@ impl Interpreter {
         left: &Object,
         right: &Object,
         operator: Token,
-    ) -> Result<(), TeciError> {
+    ) -> Result<(), TeciResult> {
         match (left, right) {
             (Object::Num(_), Object::Num(_)) => Ok(()),
-            _ => Err(TeciError::runtime_error(
+            _ => Err(TeciResult::runtime_error(
                 operator,
                 "Invalid operator for non numeric operands",
             )),
@@ -93,7 +91,7 @@ impl Interpreter {
 }
 
 impl ExprVisitor<Object> for Interpreter {
-    fn visit_assign_expr(&self, expr: &AssignExpr) -> Result<Object, TeciError> {
+    fn visit_assign_expr(&self, expr: &AssignExpr) -> Result<Object, TeciResult> {
         let value = self.evaluate(&expr.value)?;
         self.environment
             .borrow()
@@ -102,7 +100,7 @@ impl ExprVisitor<Object> for Interpreter {
         Ok(value)
     }
 
-    fn visit_unary_expr(&self, expr: &UnaryExpr) -> Result<Object, TeciError> {
+    fn visit_unary_expr(&self, expr: &UnaryExpr) -> Result<Object, TeciResult> {
         let right = self.evaluate(&expr.right)?;
         let result = match expr.operator.ttype {
             TokenType::Minus => -right,
@@ -111,13 +109,16 @@ impl ExprVisitor<Object> for Interpreter {
         };
 
         if result == Object::ArithmeticError {
-            Err(TeciError::new(expr.operator.line, "Invalid operator"))
+            Err(TeciResult::teci_error(
+                expr.operator.line,
+                "Invalid operator",
+            ))
         } else {
             Ok(result)
         }
     }
 
-    fn visit_binary_expr(&self, expr: &BinaryExpr) -> Result<Object, TeciError> {
+    fn visit_binary_expr(&self, expr: &BinaryExpr) -> Result<Object, TeciResult> {
         let left = self.evaluate(&expr.left)?;
         let right = self.evaluate(&expr.right)?;
         let result = match expr.operator.ttype {
@@ -147,11 +148,11 @@ impl ExprVisitor<Object> for Interpreter {
         };
 
         match result {
-            Object::ArithmeticError => Err(TeciError::runtime_error(
+            Object::ArithmeticError => Err(TeciResult::runtime_error(
                 expr.operator.clone(),
                 "Invalid operator",
             )),
-            Object::DivisionByZeroError => Err(TeciError::runtime_error(
+            Object::DivisionByZeroError => Err(TeciResult::runtime_error(
                 expr.operator.clone(),
                 "Division by zero",
             )),
@@ -159,19 +160,19 @@ impl ExprVisitor<Object> for Interpreter {
         }
     }
 
-    fn visit_grouping_expr(&self, expr: &GroupingExpr) -> Result<Object, TeciError> {
+    fn visit_grouping_expr(&self, expr: &GroupingExpr) -> Result<Object, TeciResult> {
         self.evaluate(&expr.expression)
     }
 
-    fn visit_literal_expr(&self, expr: &LiteralExpr) -> Result<Object, TeciError> {
+    fn visit_literal_expr(&self, expr: &LiteralExpr) -> Result<Object, TeciResult> {
         Ok(expr.value.clone().unwrap())
     }
 
-    fn visit_variable_expr(&self, expr: &VariableExpr) -> Result<Object, TeciError> {
+    fn visit_variable_expr(&self, expr: &VariableExpr) -> Result<Object, TeciResult> {
         self.environment.borrow().borrow().get(&expr.name)
     }
 
-    fn visit_logical_expr(&self, expr: &LogicalExpr) -> Result<Object, TeciError> {
+    fn visit_logical_expr(&self, expr: &LogicalExpr) -> Result<Object, TeciResult> {
         let left = self.evaluate(&expr.left)?;
         if expr.operator.ttype == TokenType::Or {
             if Interpreter::is_truthy(&left) {
@@ -185,19 +186,19 @@ impl ExprVisitor<Object> for Interpreter {
 }
 
 impl StmtVisitor<()> for Interpreter {
-    fn visit_print_stmt(&self, stmt: &PrintStmt) -> Result<(), TeciError> {
+    fn visit_print_stmt(&self, stmt: &PrintStmt) -> Result<(), TeciResult> {
         let value = self.evaluate(&stmt.expression)?;
         println!("{}", Interpreter::stringify(value));
         Ok(())
     }
 
-    fn visit_expression_stmt(&self, stmt: &ExpressionStmt) -> Result<(), TeciError> {
+    fn visit_expression_stmt(&self, stmt: &ExpressionStmt) -> Result<(), TeciResult> {
         let _val = self.evaluate(&stmt.expression)?;
         // println!("{}", val);
         Ok(())
     }
 
-    fn visit_let_stmt(&self, stmt: &LetStmt) -> Result<(), TeciError> {
+    fn visit_let_stmt(&self, stmt: &LetStmt) -> Result<(), TeciResult> {
         let value = if let Some(initializer) = &stmt.initializer {
             self.evaluate(initializer)?
         } else {
@@ -210,12 +211,12 @@ impl StmtVisitor<()> for Interpreter {
         Ok(())
     }
 
-    fn visit_block_stmt(&self, stmt: &BlockStmt) -> Result<(), TeciError> {
+    fn visit_block_stmt(&self, stmt: &BlockStmt) -> Result<(), TeciResult> {
         let e = Environment::with_environment(self.environment.borrow().clone());
         self.execute_block(&stmt.statements, e)
     }
 
-    fn visit_if_stmt(&self, stmt: &IfStmt) -> Result<(), TeciError> {
+    fn visit_if_stmt(&self, stmt: &IfStmt) -> Result<(), TeciResult> {
         if Interpreter::is_truthy(&self.evaluate(&stmt.condition)?) {
             self.execute(&stmt.then_branch)
         } else if let Some(else_branch) = &stmt.else_branch {
@@ -225,11 +226,23 @@ impl StmtVisitor<()> for Interpreter {
         }
     }
 
-    fn visit_while_stmt(&self, stmt: &WhileStmt) -> Result<(), TeciError> {
+    fn visit_while_stmt(&self, stmt: &WhileStmt) -> Result<(), TeciResult> {
         while Interpreter::is_truthy(&self.evaluate(&stmt.condition)?) {
-            self.execute(&stmt.body)?;
+            match self.execute(&stmt.body) {
+                Ok(_) => {}
+                Err(e) => match e {
+                    TeciResult::Break => {
+                        break;
+                    }
+                    _ => return Err(e),
+                },
+            }
         }
         Ok(())
+    }
+
+    fn visit_break_stmt(&self, _stmt: &BreakStmt) -> Result<(), TeciResult> {
+        Err(TeciResult::Break)
     }
 }
 

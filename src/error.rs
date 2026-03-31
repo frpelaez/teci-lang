@@ -1,38 +1,34 @@
 use crate::{token::Token, token_type::TokenType};
 
 #[derive(Debug)]
-pub struct TeciError {
-    token: Option<Token>,
-    line: usize,
-    message: String,
+pub enum TeciResult {
+    ParseError { token: Token, message: String },
+    RuntimeError { token: Token, message: String },
+    TeciError { line: usize, message: String },
+    Break,
 }
 
-impl TeciError {
-    pub fn new(line: usize, message: &str) -> Self {
-        let error = TeciError {
-            token: None,
-            line,
+impl TeciResult {
+    pub fn parse_error(token: Token, message: &str) -> TeciResult {
+        let error = TeciResult::ParseError {
+            token,
             message: message.to_string(),
         };
         error.report("");
         error
     }
 
-    pub fn parse_error(token: Token, message: &str) -> TeciError {
-        let line = token.line;
-        let error = TeciError {
-            token: Some(token),
-            line,
+    pub fn runtime_error(token: Token, message: &str) -> TeciResult {
+        let error = TeciResult::RuntimeError {
+            token,
             message: message.to_string(),
         };
         error.report("");
         error
     }
 
-    pub fn runtime_error(token: Token, message: &str) -> TeciError {
-        let line = token.line;
-        let error = TeciError {
-            token: Some(token),
+    pub fn teci_error(line: usize, message: &str) -> TeciResult {
+        let error = TeciResult::TeciError {
             line,
             message: message.to_string(),
         };
@@ -41,17 +37,31 @@ impl TeciError {
     }
 
     pub fn report(&self, loc: &str) {
-        if let Some(token) = self.token.clone() {
-            if token.ttype == TokenType::Eof {
-                eprintln!("[line {}] Error: {} at end", self.line, self.message);
-            } else {
+        match self {
+            TeciResult::ParseError { token, message } => {
+                let token_display = match &token.ttype {
+                    TokenType::Eof => "EOF",
+                    _ => &format!("{:?}::{}", token.ttype, token.lexeme),
+                };
                 eprintln!(
-                    "[line {}] Error: {} at '{}'",
-                    self.line, self.message, token.lexeme
+                    "[Parse Error] In line {} at '{}': {}",
+                    token.line, token_display, message
                 )
             }
-        } else {
-            eprintln!("[line {}] Error: {} {}", self.line, loc, self.message);
+            TeciResult::RuntimeError { token, message } => {
+                let token_display = match &token.ttype {
+                    TokenType::Eof => "EOF",
+                    _ => &format!("{:?}::{}", token.ttype, token.lexeme),
+                };
+                eprintln!(
+                    "[Runtime Error] In line {} at '{}': {}",
+                    token.line, token_display, message
+                )
+            }
+            TeciResult::TeciError { line, message } => {
+                eprintln!("[Error {}] In line {} : {}", loc, line, message)
+            }
+            TeciResult::Break => {}
         }
     }
 }

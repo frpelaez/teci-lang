@@ -4,7 +4,7 @@ use std::{
     rc::Rc,
 };
 
-use crate::{error::TeciError, object::Object, token::Token};
+use crate::{error::TeciResult, object::Object, token::Token};
 
 #[derive(Debug)]
 pub struct Environment {
@@ -31,27 +31,27 @@ impl Environment {
         self.values.insert(name.to_string(), value);
     }
 
-    pub fn get(&self, name: &Token) -> Result<Object, TeciError> {
+    pub fn get(&self, name: &Token) -> Result<Object, TeciResult> {
         if let Some(object) = self.values.get(&name.lexeme) {
             Ok(object.clone())
         } else if let Some(enc) = &self.enclosing {
             enc.borrow().get(name)
         } else {
-            Err(TeciError::runtime_error(
+            Err(TeciResult::runtime_error(
                 name.clone(),
                 format!("Undefined variable {}", name.lexeme).as_str(),
             ))
         }
     }
 
-    pub fn assign(&mut self, name: &Token, value: Object) -> Result<(), TeciError> {
+    pub fn assign(&mut self, name: &Token, value: Object) -> Result<(), TeciResult> {
         if let Entry::Occupied(mut object) = self.values.entry(name.lexeme.clone()) {
             object.insert(value);
             Ok(())
         } else if let Some(enc) = &self.enclosing {
             enc.borrow_mut().assign(name, value)
         } else {
-            Err(TeciError::runtime_error(
+            Err(TeciResult::runtime_error(
                 name.clone(),
                 &format!("Undefined variable '{}'", name.lexeme),
             ))

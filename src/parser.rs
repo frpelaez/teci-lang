@@ -1,11 +1,11 @@
 use crate::{
-    error::TeciError,
+    error::TeciResult,
     expr::{
         AssignExpr, BinaryExpr, Expr, GroupingExpr, LiteralExpr, LogicalExpr, UnaryExpr,
         VariableExpr,
     },
     object::Object,
-    stmt::{BlockStmt, ExpressionStmt, IfStmt, LetStmt, PrintStmt, Stmt, WhileStmt},
+    stmt::{BlockStmt, BreakStmt, ExpressionStmt, IfStmt, LetStmt, PrintStmt, Stmt, WhileStmt},
     token::Token,
     token_type::TokenType,
 };
@@ -25,7 +25,7 @@ impl Parser {
         }
     }
 
-    pub fn parse(&mut self) -> Result<Vec<Stmt>, TeciError> {
+    pub fn parse(&mut self) -> Result<Vec<Stmt>, TeciResult> {
         let mut statements = Vec::new();
         while !self.is_at_end() {
             statements.push(self.declaration()?);
@@ -38,7 +38,7 @@ impl Parser {
         !self.had_error
     }
 
-    fn declaration(&mut self) -> Result<Stmt, TeciError> {
+    fn declaration(&mut self) -> Result<Stmt, TeciResult> {
         let res = if self.is_match(&[TokenType::Let]) {
             self.let_declaration()
         } else {
@@ -52,7 +52,7 @@ impl Parser {
         res
     }
 
-    fn let_declaration(&mut self) -> Result<Stmt, TeciError> {
+    fn let_declaration(&mut self) -> Result<Stmt, TeciResult> {
         let name = self.consume(TokenType::Identifier, "Expected variable name")?;
 
         let initializer = if self.is_match(&[TokenType::Assign]) {
@@ -68,8 +68,10 @@ impl Parser {
         Ok(Stmt::Let(LetStmt { name, initializer }))
     }
 
-    fn statement(&mut self) -> Result<Stmt, TeciError> {
-        if self.is_match(&[TokenType::If]) {
+    fn statement(&mut self) -> Result<Stmt, TeciResult> {
+        if self.is_match(&[TokenType::Break]) {
+            self.break_statement()
+        } else if self.is_match(&[TokenType::If]) {
             self.if_statement()
         } else if self.is_match(&[TokenType::Print]) {
             self.print_statement()
@@ -87,21 +89,21 @@ impl Parser {
         }
     }
 
-    fn print_statement(&mut self) -> Result<Stmt, TeciError> {
+    fn print_statement(&mut self) -> Result<Stmt, TeciResult> {
         let expr = self.expression()?;
         self.consume(TokenType::Semicolon, "Expected ';' after expression")?;
 
         Ok(Stmt::Print(PrintStmt { expression: expr }))
     }
 
-    fn expr_statement(&mut self) -> Result<Stmt, TeciError> {
+    fn expr_statement(&mut self) -> Result<Stmt, TeciResult> {
         let expr = self.expression()?;
         self.consume(TokenType::Semicolon, "Expected ';' after expression")?;
 
         Ok(Stmt::Expression(ExpressionStmt { expression: expr }))
     }
 
-    fn block(&mut self) -> Result<Vec<Stmt>, TeciError> {
+    fn block(&mut self) -> Result<Vec<Stmt>, TeciResult> {
         let mut statements = Vec::new();
         while !self.check(TokenType::RightBrace) && !self.is_at_end() {
             statements.push(self.declaration()?);
@@ -111,7 +113,7 @@ impl Parser {
         Ok(statements)
     }
 
-    fn if_statement(&mut self) -> Result<Stmt, TeciError> {
+    fn if_statement(&mut self) -> Result<Stmt, TeciResult> {
         self.consume(TokenType::LeftParen, "Expected '(' after 'if'")?;
         let condition = self.expression()?;
         self.consume(TokenType::RightParen, "Expected ')' after if condition")?;
@@ -130,7 +132,7 @@ impl Parser {
         }))
     }
 
-    fn while_statement(&mut self) -> Result<Stmt, TeciError> {
+    fn while_statement(&mut self) -> Result<Stmt, TeciResult> {
         self.consume(TokenType::LeftParen, "Expected '(' after 'while'")?;
         let condition = self.expression()?;
         self.consume(TokenType::RightParen, "Expected ')' after while condition")?;
@@ -139,7 +141,7 @@ impl Parser {
         Ok(Stmt::While(WhileStmt { condition, body }))
     }
 
-    fn for_statement(&mut self) -> Result<Stmt, TeciError> {
+    fn for_statement(&mut self) -> Result<Stmt, TeciResult> {
         self.consume(TokenType::LeftParen, "Expected '(' after 'for'")?;
 
         let initializer = if self.is_match(&[TokenType::Semicolon]) {
@@ -192,7 +194,12 @@ impl Parser {
         Ok(body)
     }
 
-    fn expression(&mut self) -> Result<Expr, TeciError> {
+    fn break_statement(&mut self) -> Result<Stmt, TeciResult> {
+        self.consume(TokenType::Semicolon, "Expected ';' after 'break'")?;
+        Ok(Stmt::Break(BreakStmt { _a: Some(()) }))
+    }
+
+    fn expression(&mut self) -> Result<Expr, TeciResult> {
         self.assignment()
         /* TODO: comma expressions -> create new kind of expression and parse it
         let mut expr = self.equality()?;
@@ -202,7 +209,7 @@ impl Parser {
         Ok(expr) */
     }
 
-    fn assignment(&mut self) -> Result<Expr, TeciError> {
+    fn assignment(&mut self) -> Result<Expr, TeciResult> {
         let expr = self.or()?;
 
         if self.is_match(&[TokenType::Assign]) {
@@ -221,7 +228,7 @@ impl Parser {
         Ok(expr)
     }
 
-    fn or(&mut self) -> Result<Expr, TeciError> {
+    fn or(&mut self) -> Result<Expr, TeciResult> {
         let mut expr = self.and()?;
         while self.is_match(&[TokenType::Or]) {
             let operator = self.previous();
@@ -236,7 +243,7 @@ impl Parser {
         Ok(expr)
     }
 
-    fn and(&mut self) -> Result<Expr, TeciError> {
+    fn and(&mut self) -> Result<Expr, TeciResult> {
         let mut expr = self.equality()?;
         while self.is_match(&[TokenType::And]) {
             let operator = self.previous();
@@ -251,7 +258,7 @@ impl Parser {
         Ok(expr)
     }
 
-    fn equality(&mut self) -> Result<Expr, TeciError> {
+    fn equality(&mut self) -> Result<Expr, TeciResult> {
         let mut expr = self.comparison()?;
         while self.is_match(&[TokenType::BangEqual, TokenType::Equals]) {
             let operator = self.previous();
@@ -266,7 +273,7 @@ impl Parser {
         Ok(expr)
     }
 
-    fn comparison(&mut self) -> Result<Expr, TeciError> {
+    fn comparison(&mut self) -> Result<Expr, TeciResult> {
         let mut expr = self.term()?;
         while self.is_match(&[
             TokenType::Greater,
@@ -286,7 +293,7 @@ impl Parser {
         Ok(expr)
     }
 
-    fn term(&mut self) -> Result<Expr, TeciError> {
+    fn term(&mut self) -> Result<Expr, TeciResult> {
         let mut expr = self.factor()?;
         while self.is_match(&[TokenType::Minus, TokenType::Plus]) {
             let operator = self.previous();
@@ -301,7 +308,7 @@ impl Parser {
         Ok(expr)
     }
 
-    fn factor(&mut self) -> Result<Expr, TeciError> {
+    fn factor(&mut self) -> Result<Expr, TeciResult> {
         let mut expr = self.unary()?;
         while self.is_match(&[TokenType::Star, TokenType::Slash]) {
             let operator = self.previous();
@@ -316,7 +323,7 @@ impl Parser {
         Ok(expr)
     }
 
-    fn unary(&mut self) -> Result<Expr, TeciError> {
+    fn unary(&mut self) -> Result<Expr, TeciResult> {
         if self.is_match(&[TokenType::Bang, TokenType::Minus]) {
             let operator = self.previous();
             let right = self.unary()?;
@@ -329,7 +336,7 @@ impl Parser {
         }
     }
 
-    fn primary(&mut self) -> Result<Expr, TeciError> {
+    fn primary(&mut self) -> Result<Expr, TeciResult> {
         if self.is_match(&[TokenType::False]) {
             return Ok(Expr::Literal(LiteralExpr {
                 value: Some(Object::Bool(false)),
@@ -363,10 +370,10 @@ impl Parser {
             }));
         }
 
-        Err(TeciError::new(0, "unimplemented (yet)"))
+        Err(TeciResult::teci_error(0, "unimplemented (yet)"))
     }
 
-    fn consume(&mut self, ttype: TokenType, error_message: &str) -> Result<Token, TeciError> {
+    fn consume(&mut self, ttype: TokenType, error_message: &str) -> Result<Token, TeciResult> {
         if self.check(ttype) {
             Ok(self.advance())
         } else {
@@ -374,9 +381,9 @@ impl Parser {
         }
     }
 
-    fn error(&mut self, token: Token, message: &str) -> TeciError {
+    fn error(&mut self, token: Token, message: &str) -> TeciResult {
         self.had_error = true;
-        TeciError::parse_error(token, message)
+        TeciResult::parse_error(token, message)
     }
 
     fn synchronize(&mut self) {

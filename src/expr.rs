@@ -14,7 +14,7 @@ pub enum Expr {
 }
 
 impl Expr {
-    pub fn accept<T>(&self, visitor: &dyn ExprVisitor<T>) -> Result<T, TeciError> {
+    pub fn accept<T>(&self, visitor: &dyn ExprVisitor<T>) -> Result<T, TeciResult> {
         match self {
             Expr::Assign(exp) => exp.accept(visitor),
             Expr::Binary(exp) => exp.accept(visitor),
@@ -69,53 +69,53 @@ pub struct VariableExpr {
 }
 
 pub trait ExprVisitor<T> {
-    fn visit_assign_expr(&self, expr: &AssignExpr) -> Result<T, TeciError>;
-    fn visit_binary_expr(&self, expr: &BinaryExpr) -> Result<T, TeciError>;
-    fn visit_grouping_expr(&self, expr: &GroupingExpr) -> Result<T, TeciError>;
-    fn visit_logical_expr(&self, expr: &LogicalExpr) -> Result<T, TeciError>;
-    fn visit_literal_expr(&self, expr: &LiteralExpr) -> Result<T, TeciError>;
-    fn visit_unary_expr(&self, expr: &UnaryExpr) -> Result<T, TeciError>;
-    fn visit_variable_expr(&self, expr: &VariableExpr) -> Result<T, TeciError>;
+    fn visit_assign_expr(&self, expr: &AssignExpr) -> Result<T, TeciResult>;
+    fn visit_binary_expr(&self, expr: &BinaryExpr) -> Result<T, TeciResult>;
+    fn visit_grouping_expr(&self, expr: &GroupingExpr) -> Result<T, TeciResult>;
+    fn visit_logical_expr(&self, expr: &LogicalExpr) -> Result<T, TeciResult>;
+    fn visit_literal_expr(&self, expr: &LiteralExpr) -> Result<T, TeciResult>;
+    fn visit_unary_expr(&self, expr: &UnaryExpr) -> Result<T, TeciResult>;
+    fn visit_variable_expr(&self, expr: &VariableExpr) -> Result<T, TeciResult>;
 }
 
 impl AssignExpr {
-    pub fn accept<T>(&self, visitor: &dyn ExprVisitor<T>) -> Result<T, TeciError> {
+    pub fn accept<T>(&self, visitor: &dyn ExprVisitor<T>) -> Result<T, TeciResult> {
         visitor.visit_assign_expr(self)
     }
 }
 
 impl BinaryExpr {
-    pub fn accept<T>(&self, visitor: &dyn ExprVisitor<T>) -> Result<T, TeciError> {
+    pub fn accept<T>(&self, visitor: &dyn ExprVisitor<T>) -> Result<T, TeciResult> {
         visitor.visit_binary_expr(self)
     }
 }
 
 impl GroupingExpr {
-    pub fn accept<T>(&self, visitor: &dyn ExprVisitor<T>) -> Result<T, TeciError> {
+    pub fn accept<T>(&self, visitor: &dyn ExprVisitor<T>) -> Result<T, TeciResult> {
         visitor.visit_grouping_expr(self)
     }
 }
 
 impl LogicalExpr {
-    pub fn accept<T>(&self, visitor: &dyn ExprVisitor<T>) -> Result<T, TeciError> {
+    pub fn accept<T>(&self, visitor: &dyn ExprVisitor<T>) -> Result<T, TeciResult> {
         visitor.visit_logical_expr(self)
     }
 }
 
 impl LiteralExpr {
-    pub fn accept<T>(&self, visitor: &dyn ExprVisitor<T>) -> Result<T, TeciError> {
+    pub fn accept<T>(&self, visitor: &dyn ExprVisitor<T>) -> Result<T, TeciResult> {
         visitor.visit_literal_expr(self)
     }
 }
 
 impl UnaryExpr {
-    pub fn accept<T>(&self, visitor: &dyn ExprVisitor<T>) -> Result<T, TeciError> {
+    pub fn accept<T>(&self, visitor: &dyn ExprVisitor<T>) -> Result<T, TeciResult> {
         visitor.visit_unary_expr(self)
     }
 }
 
 impl VariableExpr {
-    pub fn accept<T>(&self, visitor: &dyn ExprVisitor<T>) -> Result<T, TeciError> {
+    pub fn accept<T>(&self, visitor: &dyn ExprVisitor<T>) -> Result<T, TeciResult> {
         visitor.visit_variable_expr(self)
     }
 }
