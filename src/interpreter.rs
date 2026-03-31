@@ -11,12 +11,14 @@ use crate::token_type::TokenType;
 
 pub struct Interpreter {
     environment: RefCell<Rc<RefCell<Environment>>>,
+    nesting_level: RefCell<usize>,
 }
 
 impl Interpreter {
     pub fn new() -> Self {
         Self {
             environment: RefCell::new(Rc::new(RefCell::new(Environment::new()))),
+            nesting_level: RefCell::new(0),
         }
     }
 
@@ -25,7 +27,11 @@ impl Interpreter {
     }
 
     pub fn interpret(&self, statements: &[Stmt]) -> bool {
-        statements.iter().try_for_each(|s| self.execute(s)).is_ok()
+        *self.nesting_level.borrow_mut() = 0;
+        match statements.iter().try_for_each(|s| self.execute(s)) {
+            Ok(_) => true,
+            Err(r) => matches!(r, TeciResult::Break),
+        }
     }
 
     fn execute(&self, statement: &Stmt) -> Result<(), TeciResult> {
@@ -227,6 +233,7 @@ impl StmtVisitor<()> for Interpreter {
     }
 
     fn visit_while_stmt(&self, stmt: &WhileStmt) -> Result<(), TeciResult> {
+        *self.nesting_level.borrow_mut() += 1;
         while Interpreter::is_truthy(&self.evaluate(&stmt.condition)?) {
             match self.execute(&stmt.body) {
                 Ok(_) => {}
@@ -238,11 +245,21 @@ impl StmtVisitor<()> for Interpreter {
                 },
             }
         }
+
+        *self.nesting_level.borrow_mut() -= 1;
+
         Ok(())
     }
 
-    fn visit_break_stmt(&self, _stmt: &BreakStmt) -> Result<(), TeciResult> {
-        Err(TeciResult::Break)
+    fn visit_break_stmt(&self, stmt: &BreakStmt) -> Result<(), TeciResult> {
+        if *self.nesting_level.borrow() == 0 {
+            Err(TeciResult::runtime_error(
+                stmt.token.clone(),
+                "Found a 'break' statement outside a loop",
+            ))
+        } else {
+            Err(TeciResult::Break)
+        }
     }
 }
 

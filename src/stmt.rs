@@ -29,7 +29,7 @@ impl Stmt {
 
 #[derive(Clone)]
 pub struct BreakStmt {
-    pub _a: Option<()>,
+    pub token: Token,
 }
 
 #[derive(Clone)]

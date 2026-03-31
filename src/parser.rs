@@ -196,7 +196,15 @@ impl Parser {
 
     fn break_statement(&mut self) -> Result<Stmt, TeciResult> {
         self.consume(TokenType::Semicolon, "Expected ';' after 'break'")?;
-        Ok(Stmt::Break(BreakStmt { _a: Some(()) }))
+
+        Ok(Stmt::Break(BreakStmt {
+            token: Token::new(
+                TokenType::Break,
+                "break".to_string(),
+                None,
+                self.previous().line,
+            ),
+        }))
     }
 
     fn expression(&mut self) -> Result<Expr, TeciResult> {
