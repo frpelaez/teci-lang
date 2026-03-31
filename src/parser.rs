@@ -30,6 +30,7 @@ impl Parser {
         while !self.is_at_end() {
             statements.push(self.declaration()?);
         }
+
         Ok(statements)
     }
 
@@ -43,14 +44,17 @@ impl Parser {
         } else {
             self.statement()
         };
+
         if res.is_err() {
             self.synchronize();
         };
+
         res
     }
 
     fn let_declaration(&mut self) -> Result<Stmt, TeciError> {
         let name = self.consume(TokenType::Identifier, "Expected variable name")?;
+
         let initializer = if self.is_match(&[TokenType::Assign]) {
             Some(self.expression()?)
         } else {
@@ -60,6 +64,7 @@ impl Parser {
             TokenType::Semicolon,
             "Expected ';' after variable declaration",
         )?;
+
         Ok(Stmt::Let(LetStmt { name, initializer }))
     }
 
@@ -70,6 +75,8 @@ impl Parser {
             self.print_statement()
         } else if self.is_match(&[TokenType::While]) {
             self.while_statement()
+        } else if self.is_match(&[TokenType::For]) {
+            self.for_statement()
         } else if self.is_match(&[TokenType::LeftBrace]) {
             // I do this in order to be able to reuse the self.block() for other block parsing in the future
             Ok(Stmt::Block(BlockStmt {
@@ -83,12 +90,14 @@ impl Parser {
     fn print_statement(&mut self) -> Result<Stmt, TeciError> {
         let expr = self.expression()?;
         self.consume(TokenType::Semicolon, "Expected ';' after expression")?;
+
         Ok(Stmt::Print(PrintStmt { expression: expr }))
     }
 
     fn expr_statement(&mut self) -> Result<Stmt, TeciError> {
         let expr = self.expression()?;
         self.consume(TokenType::Semicolon, "Expected ';' after expression")?;
+
         Ok(Stmt::Expression(ExpressionStmt { expression: expr }))
     }
 
@@ -98,6 +107,7 @@ impl Parser {
             statements.push(self.declaration()?);
         }
         self.consume(TokenType::RightBrace, "Expected '}' after declarations")?;
+
         Ok(statements)
     }
 
@@ -105,12 +115,14 @@ impl Parser {
         self.consume(TokenType::LeftParen, "Expected '(' after 'if'")?;
         let condition = self.expression()?;
         self.consume(TokenType::RightParen, "Expected ')' after if condition")?;
+
         let then_branch = Box::new(self.statement()?);
         let else_branch = if self.is_match(&[TokenType::Else]) {
             Some(Box::new(self.statement()?))
         } else {
             None
         };
+
         Ok(Stmt::If(IfStmt {
             condition,
             then_branch,
@@ -123,13 +135,66 @@ impl Parser {
         let condition = self.expression()?;
         self.consume(TokenType::RightParen, "Expected ')' after while condition")?;
         let body = Box::new(self.statement()?);
+
         Ok(Stmt::While(WhileStmt { condition, body }))
+    }
+
+    fn for_statement(&mut self) -> Result<Stmt, TeciError> {
+        self.consume(TokenType::LeftParen, "Expected '(' after 'for'")?;
+
+        let initializer = if self.is_match(&[TokenType::Semicolon]) {
+            None
+        } else if self.is_match(&[TokenType::Let]) {
+            Some(self.let_declaration()?)
+        } else {
+            Some(self.expr_statement()?)
+        };
+
+        let condition = if self.check(TokenType::Semicolon) {
+            None
+        } else {
+            Some(self.expression()?)
+        };
+        self.consume(TokenType::Semicolon, "Expected ';' after loop condition")?;
+
+        let increment = if self.check(TokenType::RightParen) {
+            None
+        } else {
+            Some(self.expression()?)
+        };
+        self.consume(TokenType::RightParen, "Expected ')' after for clauses")?;
+
+        let mut body = self.statement()?;
+
+        if let Some(inc) = increment {
+            body = Stmt::Block(BlockStmt {
+                statements: vec![body, Stmt::Expression(ExpressionStmt { expression: inc })],
+            });
+        }
+
+        body = Stmt::While(WhileStmt {
+            condition: if let Some(cond) = condition {
+                cond
+            } else {
+                Expr::Literal(LiteralExpr {
+                    value: Some(Object::Bool(true)),
+                })
+            },
+            body: Box::new(body),
+        });
+
+        if let Some(init) = initializer {
+            body = Stmt::Block(BlockStmt {
+                statements: vec![init, body],
+            });
+        }
+
+        Ok(body)
     }
 
     fn expression(&mut self) -> Result<Expr, TeciError> {
         self.assignment()
         /* TODO: comma expressions -> create new kind of expression and parse it
-
         let mut expr = self.equality()?;
         while self.is_match(&[TokenType::Comma]) {
             expr = self.equality()?;
@@ -139,6 +204,7 @@ impl Parser {
 
     fn assignment(&mut self) -> Result<Expr, TeciError> {
         let expr = self.or()?;
+
         if self.is_match(&[TokenType::Assign]) {
             let equals = self.previous();
             let value = self.assignment()?;
@@ -151,6 +217,7 @@ impl Parser {
             }
             self.error(equals, "Invalid assignment target");
         }
+
         Ok(expr)
     }
 
@@ -165,6 +232,7 @@ impl Parser {
                 right: Box::new(right),
             });
         }
+
         Ok(expr)
     }
 
@@ -179,6 +247,7 @@ impl Parser {
                 right: Box::new(right),
             });
         }
+
         Ok(expr)
     }
 
@@ -193,6 +262,7 @@ impl Parser {
                 right: Box::new(right),
             });
         }
+
         Ok(expr)
     }
 
@@ -212,6 +282,7 @@ impl Parser {
                 right: Box::new(right),
             });
         }
+
         Ok(expr)
     }
 
@@ -226,6 +297,7 @@ impl Parser {
                 right: Box::new(right),
             });
         }
+
         Ok(expr)
     }
 
@@ -240,6 +312,7 @@ impl Parser {
                 right: Box::new(right),
             });
         }
+
         Ok(expr)
     }
 
