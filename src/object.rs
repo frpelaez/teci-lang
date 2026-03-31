@@ -26,7 +26,7 @@ impl fmt::Display for Object {
             Self::Nil => write!(f, "nil"),
             Self::ArithmeticError => write!(f, "ArithmeticError"),
             Self::DivisionByZeroError => write!(f, "DivisionByZeroError"),
-            Self::Func(_) => todo!(),
+            Self::Func(callable) => write!(f, "{}", callable),
         }
     }
 }

@@ -8,6 +8,7 @@ mod object;
 mod parser;
 mod scanner;
 mod stmt;
+mod teci_function;
 mod token;
 mod token_type;
 

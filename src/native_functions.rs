@@ -18,4 +18,8 @@ impl TeciCallable for NativeClock {
             ))),
         }
     }
+
+    fn to_string(&self) -> String {
+        "<fun native::clock>".to_string()
+    }
 }

@@ -36,6 +36,7 @@ pub fn generate_ast(output_dir: &str) -> io::Result<()> {
             "Block      : Vec<Stmt> statements",
             "If         : Expr condition, Box<Stmt> then_branch, Option<Box<Stmt>> else_branch",
             "Expression : Expr expression",
+            "Function   : Token name, Vec<Token> params, Vec<Stmt> body",
             "Print      : Expr expression",
             "Let        : Token name, Option<Expr> initializer",
             "While      : Expr condition, Box<Stmt> body",

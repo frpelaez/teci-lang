@@ -5,7 +5,10 @@ use crate::{
         VariableExpr,
     },
     object::Object,
-    stmt::{BlockStmt, BreakStmt, ExpressionStmt, IfStmt, LetStmt, PrintStmt, Stmt, WhileStmt},
+    stmt::{
+        BlockStmt, BreakStmt, ExpressionStmt, FunctionStmt, IfStmt, LetStmt, PrintStmt, Stmt,
+        WhileStmt,
+    },
     token::Token,
     token_type::TokenType,
 };
@@ -41,6 +44,8 @@ impl Parser {
     fn declaration(&mut self) -> Result<Stmt, TeciResult> {
         let res = if self.is_match(&[TokenType::Let]) {
             self.let_declaration()
+        } else if self.is_match(&[TokenType::Fun]) {
+            self.function_declaration("function")
         } else {
             self.statement()
         };
@@ -66,6 +71,42 @@ impl Parser {
         )?;
 
         Ok(Stmt::Let(LetStmt { name, initializer }))
+    }
+
+    fn function_declaration(&mut self, kind: &str) -> Result<Stmt, TeciResult> {
+        let name = self.consume(TokenType::Identifier, &format!("Expected {} name", kind))?;
+        self.consume(
+            TokenType::LeftParen,
+            &format!("Expected '(' after {} name", kind),
+        )?;
+
+        let mut params = Vec::new();
+        if !self.check(TokenType::RightParen) {
+            loop {
+                if params.len() == 255 {
+                    let err = TeciResult::parse_error(
+                        self.peek(),
+                        "Function calls cannot accept more than 255 arguments",
+                    );
+                    err.report("");
+                } else {
+                    params.push(self.consume(TokenType::Identifier, "Expected parameter name")?);
+                }
+
+                if !self.is_match(&[TokenType::Comma]) {
+                    break;
+                }
+            }
+        }
+        self.consume(TokenType::RightParen, "Expected ')' after parameters")?;
+
+        self.consume(
+            TokenType::LeftBrace,
+            &format!("Expected '{{' before {} body", kind),
+        )?;
+        let body = self.block()?;
+
+        Ok(Stmt::Function(FunctionStmt { name, params, body }))
     }
 
     fn statement(&mut self) -> Result<Stmt, TeciResult> {
@@ -363,7 +404,7 @@ impl Parser {
         if !self.check(TokenType::RightParen) {
             loop {
                 if arguments.len() == 255 {
-                    let err = TeciResult::runtime_error(
+                    let err = TeciResult::parse_error(
                         self.peek(),
                         "Function calls cannot accept more than 255 arguments",
                     );

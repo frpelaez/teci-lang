@@ -9,12 +9,13 @@ use crate::{
     native_functions::*,
     object::Object,
     stmt::*,
+    teci_function::TeciFunction,
     token::Token,
     token_type::TokenType,
 };
 
 pub struct Interpreter {
-    globals: Rc<RefCell<Environment>>,
+    pub globals: Rc<RefCell<Environment>>,
     environment: RefCell<Rc<RefCell<Environment>>>,
     nesting_level: RefCell<usize>,
 }
@@ -53,7 +54,7 @@ impl Interpreter {
         statement.accept(self)
     }
 
-    fn execute_block(
+    pub fn execute_block(
         &self,
         statements: &[Stmt],
         environment: Environment,
@@ -108,7 +109,7 @@ impl Interpreter {
             Object::Nil => "nil".to_string(),
             Object::ArithmeticError => "arithmetic_error!!!".to_string(),
             Object::DivisionByZeroError => "division_by_zero_error!!!".to_string(),
-            Object::Func(_) => "func!!!".to_string(),
+            Object::Func(callable) => TeciCallable::to_string(&callable),
         }
     }
 }
@@ -306,6 +307,17 @@ impl StmtVisitor<()> for Interpreter {
         } else {
             Err(TeciResult::Break)
         }
+    }
+
+    fn visit_function_stmt(&self, stmt: &FunctionStmt) -> Result<(), TeciResult> {
+        let function = TeciFunction::new(stmt.clone());
+        self.environment.borrow().borrow_mut().define(
+            &stmt.name.lexeme,
+            Object::Func(Callable {
+                func: Rc::new(function),
+            }),
+        );
+        Ok(())
     }
 }
 

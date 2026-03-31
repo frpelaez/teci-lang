@@ -8,6 +8,7 @@ pub enum Stmt {
     Block(BlockStmt),
     If(IfStmt),
     Expression(ExpressionStmt),
+    Function(FunctionStmt),
     Print(PrintStmt),
     Let(LetStmt),
     While(WhileStmt),
@@ -20,6 +21,7 @@ impl Stmt {
             Stmt::Block(exp) => exp.accept(visitor),
             Stmt::If(exp) => exp.accept(visitor),
             Stmt::Expression(exp) => exp.accept(visitor),
+            Stmt::Function(exp) => exp.accept(visitor),
             Stmt::Print(exp) => exp.accept(visitor),
             Stmt::Let(exp) => exp.accept(visitor),
             Stmt::While(exp) => exp.accept(visitor),
@@ -50,6 +52,13 @@ pub struct ExpressionStmt {
 }
 
 #[derive(Clone)]
+pub struct FunctionStmt {
+    pub name: Token,
+    pub params: Vec<Token>,
+    pub body: Vec<Stmt>,
+}
+
+#[derive(Clone)]
 pub struct PrintStmt {
     pub expression: Expr,
 }
@@ -71,6 +80,7 @@ pub trait StmtVisitor<T> {
     fn visit_block_stmt(&self, stmt: &BlockStmt) -> Result<T, TeciResult>;
     fn visit_if_stmt(&self, stmt: &IfStmt) -> Result<T, TeciResult>;
     fn visit_expression_stmt(&self, stmt: &ExpressionStmt) -> Result<T, TeciResult>;
+    fn visit_function_stmt(&self, stmt: &FunctionStmt) -> Result<T, TeciResult>;
     fn visit_print_stmt(&self, stmt: &PrintStmt) -> Result<T, TeciResult>;
     fn visit_let_stmt(&self, stmt: &LetStmt) -> Result<T, TeciResult>;
     fn visit_while_stmt(&self, stmt: &WhileStmt) -> Result<T, TeciResult>;
@@ -97,6 +107,12 @@ impl IfStmt {
 impl ExpressionStmt {
     pub fn accept<T>(&self, visitor: &dyn StmtVisitor<T>) -> Result<T, TeciResult> {
         visitor.visit_expression_stmt(self)
+    }
+}
+
+impl FunctionStmt {
+    pub fn accept<T>(&self, visitor: &dyn StmtVisitor<T>) -> Result<T, TeciResult> {
+        visitor.visit_function_stmt(self)
     }
 }
 
