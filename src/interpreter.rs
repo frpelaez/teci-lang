@@ -15,7 +15,7 @@ use crate::{
 };
 
 pub struct Interpreter {
-    pub globals: Rc<RefCell<Environment>>,
+    pub _globals: Rc<RefCell<Environment>>,
     environment: RefCell<Rc<RefCell<Environment>>>,
     nesting_level: RefCell<usize>,
 }
@@ -32,7 +32,7 @@ impl Interpreter {
         );
 
         Self {
-            globals: Rc::clone(&globals),
+            _globals: Rc::clone(&globals),
             environment: RefCell::new(Rc::clone(&globals)),
             nesting_level: RefCell::new(0),
         }
@@ -310,7 +310,7 @@ impl StmtVisitor<()> for Interpreter {
     }
 
     fn visit_function_stmt(&self, stmt: &FunctionStmt) -> Result<(), TeciResult> {
-        let function = TeciFunction::new(stmt);
+        let function = TeciFunction::new(stmt, &self.environment.borrow());
         self.environment.borrow().borrow_mut().define(
             &stmt.name.lexeme,
             Object::Func(Callable {

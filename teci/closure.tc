@@ -1,0 +1,10 @@
+let a = "global";
+{
+    fun show() {
+        print a;
+    }
+
+    show();
+    let a = "local";
+    show();
+}

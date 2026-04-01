@@ -1,0 +1,16 @@
+fun say_hi(first, last) {
+    print "Hi, " + first + " " + last + "!";
+}
+
+say_hi("TECI", "survivors");
+
+fun count_rec(n) {
+    if (n == 0) {
+        print "Done!";
+    } else {
+        print n;
+        count_rec(n - 1);
+    }
+}
+
+count_rec(10);
