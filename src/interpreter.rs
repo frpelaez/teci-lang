@@ -265,7 +265,7 @@ impl StmtVisitor<()> for Interpreter {
     }
 
     fn visit_block_stmt(&self, stmt: &BlockStmt) -> Result<(), TeciResult> {
-        let e = Environment::with_environment(self.environment.borrow().clone());
+        let e = Environment::with_enclosing(self.environment.borrow().clone());
         self.execute_block(&stmt.statements, e)
     }
 
@@ -310,7 +310,7 @@ impl StmtVisitor<()> for Interpreter {
     }
 
     fn visit_function_stmt(&self, stmt: &FunctionStmt) -> Result<(), TeciResult> {
-        let function = TeciFunction::new(stmt.clone());
+        let function = TeciFunction::new(stmt);
         self.environment.borrow().borrow_mut().define(
             &stmt.name.lexeme,
             Object::Func(Callable {

@@ -14,6 +14,7 @@ pub fn generate_ast(output_dir: &str) -> io::Result<()> {
     define_ast(
         output_dir,
         "Expr",
+        &[],
         &["token", "object", "error"],
         &[
             "Assign     : Token name, Box<Expr> value",
@@ -30,13 +31,14 @@ pub fn generate_ast(output_dir: &str) -> io::Result<()> {
     define_ast(
         output_dir,
         "Stmt",
+        &["std::rc::Rc"],
         &["error", "expr", "token"],
         &[
             "Break      : Token token",
             "Block      : Vec<Stmt> statements",
             "If         : Expr condition, Box<Stmt> then_branch, Option<Box<Stmt>> else_branch",
             "Expression : Expr expression",
-            "Function   : Token name, Vec<Token> params, Vec<Stmt> body",
+            "Function   : Token name, Rc<Vec<Token>> params, Rc<Vec<Stmt>> body",
             "Print      : Expr expression",
             "Let        : Token name, Option<Expr> initializer",
             "While      : Expr condition, Box<Stmt> body",
@@ -47,12 +49,19 @@ pub fn generate_ast(output_dir: &str) -> io::Result<()> {
 fn define_ast(
     output_dir: &str,
     base_name: &str,
+    std_imports: &[&str],
     imports: &[&str],
     types: &[&str],
 ) -> io::Result<()> {
     let path = format!("{output_dir}/{}.rs", base_name.to_lowercase());
     let mut file = File::create(path)?;
     let mut tree_types = Vec::new();
+
+    for module in std_imports {
+        writeln!(file, "use {};", module)?;
+    }
+
+    writeln!(file)?;
 
     for module in imports {
         writeln!(file, "use crate::{}::*;", module)?;

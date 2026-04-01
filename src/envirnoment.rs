@@ -20,7 +20,7 @@ impl Environment {
         }
     }
 
-    pub fn with_environment(environment: Rc<RefCell<Environment>>) -> Self {
+    pub fn with_enclosing(environment: Rc<RefCell<Environment>>) -> Self {
         Self {
             values: HashMap::new(),
             enclosing: Some(environment),
@@ -93,7 +93,7 @@ mod tests {
     #[test]
     fn t_enclose_environment() {
         let e = Rc::new(RefCell::new(Environment::new()));
-        let f = Environment::with_environment(Rc::clone(&e));
+        let f = Environment::with_enclosing(Rc::clone(&e));
         assert_eq!(f.enclosing.unwrap().borrow().values, e.borrow().values)
     }
 
@@ -101,7 +101,7 @@ mod tests {
     fn t_lookup_from_enclosing() {
         let e = Rc::new(RefCell::new(Environment::new()));
         e.borrow_mut().define("a", Object::Num(1.0));
-        let f = Environment::with_environment(Rc::clone(&e));
+        let f = Environment::with_enclosing(Rc::clone(&e));
         let a_token = Token::new(TokenType::Identifier, "a".to_string(), None, 0);
         assert_eq!(f.get(&a_token).unwrap(), Object::Num(1.0))
     }
@@ -110,7 +110,7 @@ mod tests {
     fn t_assign_to_enclosing() {
         let e = Rc::new(RefCell::new(Environment::new()));
         e.borrow_mut().define("a", Object::Num(1.0));
-        let mut f = Environment::with_environment(Rc::clone(&e));
+        let mut f = Environment::with_enclosing(Rc::clone(&e));
         let a_token = Token::new(TokenType::Identifier, "a".to_string(), None, 0);
         assert!(f.assign(&a_token, Object::Num(2.0)).is_ok());
         assert_eq!(f.get(&a_token).unwrap(), Object::Num(2.0))

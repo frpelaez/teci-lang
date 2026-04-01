@@ -106,7 +106,11 @@ impl Parser {
         )?;
         let body = self.block()?;
 
-        Ok(Stmt::Function(FunctionStmt { name, params, body }))
+        Ok(Stmt::Function(FunctionStmt {
+            name,
+            params: params.into(),
+            body: body.into(),
+        }))
     }
 
     fn statement(&mut self) -> Result<Stmt, TeciResult> {

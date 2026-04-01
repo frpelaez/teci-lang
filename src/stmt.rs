@@ -1,3 +1,5 @@
+use std::rc::Rc;
+
 use crate::error::*;
 use crate::expr::*;
 use crate::token::*;
@@ -54,8 +56,8 @@ pub struct ExpressionStmt {
 #[derive(Clone)]
 pub struct FunctionStmt {
     pub name: Token,
-    pub params: Vec<Token>,
-    pub body: Vec<Stmt>,
+    pub params: Rc<Vec<Token>>,
+    pub body: Rc<Vec<Stmt>>,
 }
 
 #[derive(Clone)]
