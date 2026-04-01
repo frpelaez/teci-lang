@@ -34,9 +34,11 @@ impl TeciCallable for TeciFunction {
             env.define(&p.lexeme, a);
         });
 
-        interpreter.execute_block(&self.body, env)?;
-
-        Ok(Object::Nil)
+        if let Err(TeciResult::Return { _value }) = interpreter.execute_block(&self.body, env) {
+            Ok(_value)
+        } else {
+            Ok(Object::Nil)
+        }
     }
 
     fn arity(&self) -> usize {

@@ -40,6 +40,7 @@ pub fn generate_ast(output_dir: &str) -> io::Result<()> {
             "Expression : Expr expression",
             "Function   : Token name, Rc<Vec<Token>> params, Rc<Vec<Stmt>> body",
             "Print      : Expr expression",
+            "Return     : Token _keyword, Option<Expr> value",
             "Let        : Token name, Option<Expr> initializer",
             "While      : Expr condition, Box<Stmt> body",
         ],

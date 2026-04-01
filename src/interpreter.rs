@@ -319,6 +319,16 @@ impl StmtVisitor<()> for Interpreter {
         );
         Ok(())
     }
+
+    fn visit_return_stmt(&self, stmt: &ReturnStmt) -> Result<(), TeciResult> {
+        let value = if let Some(obj) = &stmt.value {
+            self.evaluate(obj)?
+        } else {
+            Object::Nil
+        };
+
+        Err(TeciResult::Return { _value: value })
+    }
 }
 
 #[cfg(test)]

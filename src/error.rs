@@ -1,12 +1,16 @@
-use crate::{token::Token, token_type::TokenType};
+use crate::{object::Object, token::Token, token_type::TokenType};
 
 #[derive(Debug)]
 pub enum TeciResult {
+    // Errors
     ParseError { token: Token, message: String },
     RuntimeError { token: Token, message: String },
     TeciError { line: usize, message: String },
     SystemError { message: String },
+
+    // Statement tricks
     Break,
+    Return { _value: Object },
 }
 
 impl TeciResult {
@@ -74,6 +78,7 @@ impl TeciResult {
                 eprintln!("[System Error] {}", message)
             }
             TeciResult::Break => {}
+            TeciResult::Return { _value } => {}
         }
     }
 }

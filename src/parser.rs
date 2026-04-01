@@ -6,8 +6,8 @@ use crate::{
     },
     object::Object,
     stmt::{
-        BlockStmt, BreakStmt, ExpressionStmt, FunctionStmt, IfStmt, LetStmt, PrintStmt, Stmt,
-        WhileStmt,
+        BlockStmt, BreakStmt, ExpressionStmt, FunctionStmt, IfStmt, LetStmt, PrintStmt, ReturnStmt,
+        Stmt, WhileStmt,
     },
     token::Token,
     token_type::TokenType,
@@ -120,6 +120,8 @@ impl Parser {
             self.if_statement()
         } else if self.is_match(&[TokenType::Print]) {
             self.print_statement()
+        } else if self.is_match(&[TokenType::Return]) {
+            self.return_statement()
         } else if self.is_match(&[TokenType::While]) {
             self.while_statement()
         } else if self.is_match(&[TokenType::For]) {
@@ -139,6 +141,19 @@ impl Parser {
         self.consume(TokenType::Semicolon, "Expected ';' after expression")?;
 
         Ok(Stmt::Print(PrintStmt { expression: expr }))
+    }
+
+    fn return_statement(&mut self) -> Result<Stmt, TeciResult> {
+        let _keyword = self.previous();
+
+        let value = if self.check(TokenType::Semicolon) {
+            None
+        } else {
+            Some(self.expression()?)
+        };
+        self.consume(TokenType::Semicolon, "Expected ';' after return value")?;
+
+        Ok(Stmt::Return(ReturnStmt { _keyword, value }))
     }
 
     fn expr_statement(&mut self) -> Result<Stmt, TeciResult> {
